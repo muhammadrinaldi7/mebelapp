@@ -36,5 +36,6 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
         $staff->assignRole($staffRole);
+        $this->call(Brand::class);
     }
 }
