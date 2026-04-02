@@ -7,8 +7,10 @@ use App\Livewire\ProductIndex;
 use App\Livewire\TransactionIn;
 use App\Livewire\TransactionOut;
 use App\Livewire\Sales;
+use App\Livewire\Report;
 use App\Livewire\UserManagement;
 use App\Livewire\RoleManagement;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,6 +25,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions/in', TransactionIn::class)->name('transactions.in');
     Route::get('/transactions/out', TransactionOut::class)->name('transactions.out');
     Route::get('/sales', Sales::class)->name('sales.index');
+    Route::get('/sales/{id}/invoice', [App\Http\Controllers\SalesController::class, 'invoice'])->name('sales.invoice');
+    Route::get('/reports', Report::class)->name('reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('report.export');
 
     // Admin only routes
     Route::middleware(['role:admin'])->group(function () {
@@ -30,3 +35,4 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/roles', RoleManagement::class)->name('roles.index');
     });
 });
+

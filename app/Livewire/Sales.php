@@ -23,11 +23,23 @@ class Sales extends Component
     public $notes = '';
     public $items = [];
 
+    // Customer & Financial Additions
+    public $customer_name = '';
+    public $customer_phone = '';
+    public $customer_address = '';
+    public $discount = 0;
+    public $shipping_cost = 0;
+
     public $search = '';
 
     protected $rules = [
         'reference_code' => 'required|string|max:255',
         'transaction_date' => 'required|date',
+        'customer_name' => 'nullable|string|max:255',
+        'customer_phone' => 'nullable|string|max:50',
+        'customer_address' => 'nullable|string',
+        'discount' => 'nullable|numeric|min:0',
+        'shipping_cost' => 'nullable|numeric|min:0',
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity' => 'required|integer|min:1',
@@ -47,9 +59,11 @@ class Sales extends Component
 
     public function openForm()
     {
-        $this->reset(['reference_code', 'notes', 'items']);
+        $this->reset(['reference_code', 'notes', 'items', 'customer_name', 'customer_phone', 'customer_address', 'discount', 'shipping_cost']);
         $this->transaction_date = now()->format('Y-m-d');
         $this->reference_code = 'SALE-' . date('YmdHis');
+        $this->discount = 0;
+        $this->shipping_cost = 0;
         $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
         $this->showForm = true;
     }
@@ -101,8 +115,13 @@ class Sales extends Component
                 'type' => 'sale',
                 'reference_code' => $this->reference_code,
                 'transaction_date' => $this->transaction_date,
+                'customer_name' => $this->customer_name,
+                'customer_phone' => $this->customer_phone,
+                'customer_address' => $this->customer_address,
                 'notes' => $this->notes,
                 'total_amount' => $totalAmount,
+                'discount' => $this->discount ?: 0,
+                'shipping_cost' => $this->shipping_cost ?: 0,
             ]);
 
             foreach ($this->items as $item) {
@@ -117,6 +136,19 @@ class Sales extends Component
 
         $this->showForm = false;
         session()->flash('message', 'Penjualan berhasil disimpan.');
+    }
+
+    public function getSubtotalProperty()
+    {
+        return collect($this->items)->sum(fn($item) => ((float)($item['price'] ?? 0)) * ((int)($item['quantity'] ?? 0)));
+    }
+
+    public function getGrandTotalProperty()
+    {
+        $sub = $this->subtotal;
+        $disc = (float)($this->discount ?: 0);
+        $ship = (float)($this->shipping_cost ?: 0);
+        return $sub - $disc + $ship;
     }
 
     public function render()

@@ -14,10 +14,15 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'type',
+        'customer_name',
+        'customer_phone',
+        'customer_address',
         'reference_code',
         'transaction_date',
         'notes',
         'total_amount',
+        'discount',
+        'shipping_cost',
     ];
 
     protected $casts = [
