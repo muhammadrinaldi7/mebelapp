@@ -24,19 +24,19 @@
         <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
             <button wire:click="setTab('transactions')" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors {{ $activeTab === 'transactions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
                 <svg class="-ml-0.5 mr-2 h-5 w-5 inline-block {{ $activeTab === 'transactions' ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5V3L12 16.5 3 3v13.5z"/></svg>
-                Log Transaksi
+                Riwayat Transaksi
             </button>
             <button wire:click="setTab('stock')" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors {{ $activeTab === 'stock' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
                 <svg class="-ml-0.5 mr-2 h-5 w-5 inline-block {{ $activeTab === 'stock' ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
-                Stok & Valuasi Aset
+                Sisa Gudang & Modal
             </button>
             <button wire:click="setTab('movement')" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors {{ $activeTab === 'movement' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
                 <svg class="-ml-0.5 mr-2 h-5 w-5 inline-block {{ $activeTab === 'movement' ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
-                Fast & Slow Moving
+                Barang Laris & Tidak Laris
             </button>
             <button wire:click="setTab('profit')" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors {{ $activeTab === 'profit' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
                 <svg class="-ml-0.5 mr-2 h-5 w-5 inline-block {{ $activeTab === 'profit' ? 'text-indigo-500' : 'text-gray-400' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Keuntungan Kotor
+                Laporan Keuntungan
             </button>
         </nav>
     </div>
@@ -96,70 +96,70 @@
     <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         @if($activeTab === 'transactions')
             <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-gray-500">Total Form</p>
+                <p class="text-xs font-medium text-gray-500">Jumlah Transaksi</p>
                 <p class="mt-1 text-xl font-bold text-gray-900">{{ $summary['totalTransactions'] }}</p>
             </div>
             <div class="rounded-2xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200 text-center">
-                <p class="text-xs font-medium text-emerald-600">Terima Barang</p>
+                <p class="text-xs font-medium text-emerald-600">Barang Masuk / Retur</p>
                 <p class="mt-1 text-xl font-bold text-emerald-700">{{ $summary['totalIn'] }}</p>
             </div>
             <div class="rounded-2xl bg-orange-50 p-4 shadow-sm ring-1 ring-orange-200 text-center">
-                <p class="text-xs font-medium text-orange-600">Kirim Barang</p>
+                <p class="text-xs font-medium text-orange-600">Barang Keluar</p>
                 <p class="mt-1 text-xl font-bold text-orange-700">{{ $summary['totalOut'] }}</p>
             </div>
             <div class="rounded-2xl bg-indigo-50 p-4 shadow-sm ring-1 ring-indigo-200 text-center">
-                <p class="text-xs font-medium text-indigo-600">Total Nilai Penjualan</p>
+                <p class="text-xs font-medium text-indigo-600">Total Uang Penjualan</p>
                 <p class="mt-1 text-lg font-bold text-indigo-700">Rp {{ number_format($summary['totalRevenue'], 0, ',', '.') }}</p>
             </div>
         @elseif($activeTab === 'stock')
             <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-gray-500">Total Jenis SKU</p>
+                <p class="text-xs font-medium text-gray-500">Macam Bentuk Barang</p>
                 <p class="mt-1 text-xl font-bold text-gray-900">{{ $summary['totalItems'] }}</p>
             </div>
             <div class="rounded-2xl bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200 text-center">
-                <p class="text-xs font-medium text-blue-600">Total Fisik Unit</p>
+                <p class="text-xs font-medium text-blue-600">Jumlah Fisik Barang</p>
                 <p class="mt-1 text-xl font-bold text-blue-700">{{ $summary['totalStock'] }} Unit</p>
             </div>
             <div class="rounded-2xl bg-purple-50 p-4 shadow-sm ring-1 ring-purple-200 text-center">
-                <p class="text-xs font-medium text-purple-600">Valuasi Aset Modal</p>
+                <p class="text-xs font-medium text-purple-600">Total Uang Modal</p>
                 <p class="mt-1 text-lg font-bold text-purple-700">Rp {{ number_format($summary['totalAssetValue'], 0, ',', '.') }}</p>
             </div>
             <div class="rounded-2xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200 text-center">
-                <p class="text-xs font-medium text-emerald-600">Potensi Laba Kotor Bersih</p>
+                <p class="text-xs font-medium text-emerald-600">Terjual Semua Jadi Untung</p>
                 <p class="mt-1 text-lg font-bold text-emerald-700">Rp {{ number_format($summary['totalPotentialRevenue'] - $summary['totalAssetValue'], 0, ',', '.') }}</p>
             </div>
         @elseif($activeTab === 'movement')
             <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-gray-500">Unit Masuk Gudang</p>
+                <p class="text-xs font-medium text-gray-500">Barang Masuk Gudang</p>
                 <p class="mt-1 text-xl font-bold text-gray-900">{{ $summary['totalInQty'] }}</p>
             </div>
              <div class="rounded-2xl bg-orange-50 p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-orange-600">Unit Keluar Gudang</p>
+                <p class="text-xs font-medium text-orange-600">Barang Keluar Titipan</p>
                 <p class="mt-1 text-xl font-bold text-orange-700">{{ $summary['totalOutQty'] }}</p>
             </div>
             <div class="rounded-2xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200 text-center">
-                <p class="text-xs font-medium text-emerald-600">Total Unit Terjual</p>
+                <p class="text-xs font-medium text-emerald-600">Total Laku Terjual</p>
                 <p class="mt-1 text-xl font-bold text-emerald-700">{{ $summary['totalSaleQty'] }}</p>
             </div>
             <div class="rounded-2xl bg-red-50 p-4 shadow-sm ring-1 ring-red-200 text-center">
-                <p class="text-xs font-medium text-red-600">Dead Stock (Mangkrak)</p>
+                <p class="text-xs font-medium text-red-600">Barang Tidak Laku-laku</p>
                 <p class="mt-1 text-xl font-bold text-red-700">{{ $summary['deadStockCount'] }} Produk</p>
             </div>
         @elseif($activeTab === 'profit')
             <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-gray-500">Item Terjual</p>
+                <p class="text-xs font-medium text-gray-500">Produk Terjual</p>
                 <p class="mt-1 text-xl font-bold text-gray-900">{{ $summary['totalSalesItems'] }}</p>
             </div>
             <div class="rounded-2xl bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200 text-center">
-                <p class="text-xs font-medium text-blue-600">Nilai Pendapatan</p>
+                <p class="text-xs font-medium text-blue-600">Total Uang Masuk</p>
                 <p class="mt-1 text-lg font-bold text-blue-700">Rp {{ number_format($summary['totalRevenue'], 0, ',', '.') }}</p>
             </div>
             <div class="rounded-2xl bg-red-50 p-4 shadow-sm ring-1 ring-red-200 text-center">
-                <p class="text-xs font-medium text-red-600">Beban / HPP</p>
+                <p class="text-xs font-medium text-red-600">Tanggungan Modal</p>
                 <p class="mt-1 text-lg font-bold text-red-700">Rp {{ number_format($summary['totalCost'], 0, ',', '.') }}</p>
             </div>
             <div class="rounded-2xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200 text-center">
-                <p class="text-xs font-medium text-emerald-600">Laba Kotor Keuntungan</p>
+                <p class="text-xs font-medium text-emerald-600">Keuntungan (Belum Potongan)</p>
                 <p class="mt-1 text-xl font-bold text-emerald-700">Rp {{ number_format($summary['grossProfit'], 0, ',', '.') }}</p>
             </div>
         @endif
