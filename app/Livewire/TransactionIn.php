@@ -94,7 +94,7 @@ class TransactionIn extends Component
         });
 
         $this->showForm = false;
-        session()->flash('message', 'Transaksi barang masuk berhasil disimpan.');
+        $this->dispatch('notify', type: 'success', message: 'Transaksi barang masuk berhasil disimpan.');
     }
 
     public function render()
@@ -111,3 +111,4 @@ class TransactionIn extends Component
         ]);
     }
 }
+

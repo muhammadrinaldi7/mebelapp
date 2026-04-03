@@ -20,6 +20,7 @@ class TransactionOut extends Component
     public $showForm = false;
     public $reference_code = '';
     public $transaction_date = '';
+    public $out_reason = 'Rusak';
     public $notes = '';
     public $items = [];
 
@@ -28,6 +29,7 @@ class TransactionOut extends Component
     protected $rules = [
         'reference_code' => 'required|string|max:255',
         'transaction_date' => 'required|date',
+        'out_reason' => 'required|string',
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity' => 'required|integer|min:1',
@@ -47,9 +49,10 @@ class TransactionOut extends Component
 
     public function openForm()
     {
-        $this->reset(['reference_code', 'notes', 'items']);
+        $this->reset(['reference_code', 'notes', 'items', 'out_reason']);
         $this->transaction_date = now()->format('Y-m-d');
         $this->reference_code = 'OUT-' . date('YmdHis');
+        $this->out_reason = 'Rusak';
         $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
         $this->showForm = true;
     }
@@ -75,20 +78,22 @@ class TransactionOut extends Component
         foreach ($this->items as $item) {
             $product = Product::find($item['product_id']);
             if ($product && $product->current_stock < $item['quantity']) {
-                session()->flash('error', "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}");
+                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}");
                 return;
             }
         }
 
         DB::transaction(function () {
             $totalAmount = collect($this->items)->sum(fn($item) => $item['quantity'] * $item['price']);
+            
+            $formattedNotes = "[{$this->out_reason}] " . $this->notes;
 
             $transaction = Transaction::create([
                 'user_id' => Auth::id(),
                 'type' => 'out',
                 'reference_code' => $this->reference_code,
                 'transaction_date' => $this->transaction_date,
-                'notes' => $this->notes,
+                'notes' => trim($formattedNotes),
                 'total_amount' => $totalAmount,
             ]);
 
@@ -103,7 +108,7 @@ class TransactionOut extends Component
         });
 
         $this->showForm = false;
-        session()->flash('message', 'Transaksi barang keluar berhasil disimpan.');
+        $this->dispatch('notify', type: 'success', message: 'Transaksi barang keluar berhasil disimpan.');
     }
 
     public function render()
@@ -120,3 +125,4 @@ class TransactionOut extends Component
         ]);
     }
 }
+

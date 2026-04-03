@@ -57,13 +57,13 @@ class CategoryIndex extends Component
                 'name' => $this->name,
                 'description' => $this->description,
             ]);
-            session()->flash('message', 'Kategori berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'Kategori berhasil diperbarui.');
         } else {
             Category::create([
                 'name' => $this->name,
                 'description' => $this->description,
             ]);
-            session()->flash('message', 'Kategori berhasil ditambahkan.');
+            $this->dispatch('notify', type: 'success', message: 'Kategori berhasil ditambahkan.');
         }
 
         $this->showModal = false;
@@ -81,7 +81,7 @@ class CategoryIndex extends Component
         Category::findOrFail($this->deleteId)->delete();
         $this->confirmingDelete = false;
         $this->deleteId = null;
-        session()->flash('message', 'Kategori berhasil dihapus.');
+        $this->dispatch('notify', type: 'success', message: 'Kategori berhasil dihapus.');
     }
 
     public function render()
@@ -93,3 +93,4 @@ class CategoryIndex extends Component
         return view('livewire.category-index', compact('categories'));
     }
 }
+

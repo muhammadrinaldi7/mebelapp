@@ -72,7 +72,7 @@ class UserManagement extends Component
                 $user->update(['password' => Hash::make($this->password)]);
             }
             $user->syncRoles([$this->role]);
-            session()->flash('message', 'User berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'User berhasil diperbarui.');
         } else {
             $user = User::create([
                 'name' => $this->name,
@@ -80,7 +80,7 @@ class UserManagement extends Component
                 'password' => Hash::make($this->password),
             ]);
             $user->assignRole($this->role);
-            session()->flash('message', 'User berhasil ditambahkan.');
+            $this->dispatch('notify', type: 'success', message: 'User berhasil ditambahkan.');
         }
 
         $this->showModal = false;
@@ -98,7 +98,7 @@ class UserManagement extends Component
         User::findOrFail($this->deleteId)->delete();
         $this->confirmingDelete = false;
         $this->deleteId = null;
-        session()->flash('message', 'User berhasil dihapus.');
+        $this->dispatch('notify', type: 'success', message: 'User berhasil dihapus.');
     }
 
     public function render()
@@ -116,3 +116,4 @@ class UserManagement extends Component
         ]);
     }
 }
+

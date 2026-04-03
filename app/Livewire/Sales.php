@@ -124,7 +124,7 @@ class Sales extends Component
         foreach ($this->items as $item) {
             $product = Product::find($item['product_id']);
             if ($product && $product->current_stock < $item['quantity']) {
-                session()->flash('error', "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}");
+                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}");
                 return;
             }
         }
@@ -161,7 +161,7 @@ class Sales extends Component
         });
 
         $this->showForm = false;
-        session()->flash('message', 'Penjualan berhasil disimpan.');
+        $this->dispatch('notify', type: 'success', message: 'Penjualan berhasil disimpan.');
     }
 
     public function openEditForm($id)
@@ -195,7 +195,7 @@ class Sales extends Component
                 'driver_name' => $this->edit_shipping_status !== 'bawa_sendiri' ? $this->edit_driver_name : null,
             ]);
             $this->showEditForm = false;
-            session()->flash('message', 'Status transaksi berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'Status transaksi berhasil diperbarui.');
         }
     }
 
@@ -226,3 +226,4 @@ class Sales extends Component
         ]);
     }
 }
+

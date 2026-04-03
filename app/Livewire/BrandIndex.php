@@ -57,13 +57,13 @@ class BrandIndex extends Component
                 'name' => $this->name,
                 'description' => $this->description,
             ]);
-            session()->flash('message', 'Merek berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'Merek berhasil diperbarui.');
         } else {
             Brand::create([
                 'name' => $this->name,
                 'description' => $this->description,
             ]);
-            session()->flash('message', 'Merek berhasil ditambahkan.');
+            $this->dispatch('notify', type: 'success', message: 'Merek berhasil ditambahkan.');
         }
 
         $this->showModal = false;
@@ -81,7 +81,7 @@ class BrandIndex extends Component
         Brand::findOrFail($this->deleteId)->delete();
         $this->confirmingDelete = false;
         $this->deleteId = null;
-        session()->flash('message', 'Merek berhasil dihapus.');
+        $this->dispatch('notify', type: 'success', message: 'Merek berhasil dihapus.');
     }
 
     public function render()
@@ -93,3 +93,4 @@ class BrandIndex extends Component
         return view('livewire.brand-index', compact('brands'));
     }
 }
+
