@@ -3,7 +3,7 @@
     <p class="mt-1 text-sm text-gray-500">Ringkasan statistik, valuasi aset, dan performa bisnis bulan ini.</p>
 
     {{-- Stats Cards - Grade A Financial Focus --}}
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
         {{-- Card 1: Valuasi Aset --}}
         {{-- <div class="overflow-hidden rounded-2xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-900/5 bg-linear-to-br from-indigo-50 to-white">
             <div class="flex items-center gap-3">
@@ -28,7 +28,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Untung Kotor Bulan Ini</p>
+                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Laba Kotor Bulan Ini</p>
                     <p class="text-xl font-bold text-gray-900 mt-0.5">Rp
                         {{ number_format($grossProfitThisMonth ?? 0, 0, ',', '.') }}</p>
                 </div>
@@ -45,7 +45,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Uang Masuk (Bulan Ini)</p>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Omset (Bulan Ini)</p>
                     <p class="text-xl font-bold text-gray-900 mt-0.5">Rp
                         {{ number_format($totalRevenueThisMonth ?? 0, 0, ',', '.') }}</p>
                 </div>
@@ -53,7 +53,7 @@
         </div>
 
         {{-- Card 4: Total Produk --}}
-        <div class="overflow-hidden rounded-2xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-900/5">
+        {{-- <div class="overflow-hidden rounded-2xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-900/5">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-gray-500/10 rounded-xl">
                     <svg class="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,54 +67,12 @@
                         {{ number_format($totalProducts ?? 0, 0, ',', '.') }} SKU</p>
                 </div>
             </div>
-        </div>
-    </div>
-
-    {{-- Charts Row 1 --}}
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {{-- Chart 1: Transaction Trend --}}
-        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-            <h3 class="text-base font-bold text-gray-900">Pergerakan Barang (30 Hari)</h3>
-            <p class="text-xs text-gray-500 mt-1">Frekuensi terjual dan masuknya stok baru</p>
-            <div class="mt-6 relative" style="height: 280px;">
-                <canvas id="trendChart"></canvas>
-            </div>
-        </div>
-
-        {{-- Chart 2: Revenue Trend --}}
-        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-            <h3 class="text-base font-bold text-gray-900">Grafik Pemasukan (30 Hari)</h3>
-            <p class="text-xs text-gray-500 mt-1">Uang kotor yang didapat per hari (sudah potong diskon)</p>
-            <div class="mt-6 relative" style="height: 280px;">
-                <canvas id="revenueChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    {{-- Charts Row 2 --}}
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {{-- Chart 3: Top Products --}}
-        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-            <h3 class="text-base font-bold text-gray-900">5 Mebel Paling Cuan</h3>
-            <p class="text-xs text-gray-500 mt-1">Berdasarkan penyumbang rupiah terbanyak</p>
-            <div class="mt-6 relative" style="height: 260px;">
-                <canvas id="topProductsChart"></canvas>
-            </div>
-        </div>
-
-        {{-- Chart 4: Stock Asset by Category --}}
-        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
-            <h3 class="text-base font-bold text-gray-900">Sebaran Modal Gudang</h3>
-            <p class="text-xs text-gray-500 mt-1">Estimasi uang Anda berbentuk mebel (%)</p>
-            <div class="mt-6 flex items-center justify-center relative" style="height: 260px;">
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
+        </div> --}}
     </div>
 
     {{-- Table Rows --}}
     <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-1 border rounded-3xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+        <div class="lg:col-span-1 rounded-3xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
             <div class="p-5 border-b border-gray-100 bg-red-50/50">
                 <h2 class="text-sm font-bold text-red-600 flex items-center gap-2">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -145,7 +103,7 @@
             </div>
         </div>
 
-        <div class="lg:col-span-2 border rounded-3xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+        <div class="lg:col-span-2 rounded-3xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
             <div class="p-5 border-b border-gray-100">
                 <h2 class="text-sm font-bold text-gray-900">Aktivitas Terkini (10 Transaksi Terakhir)</h2>
             </div>
@@ -207,6 +165,50 @@
             </div>
         </div>
     </div>
+
+    {{-- Charts Row 1 --}}
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {{-- Chart 1: Transaction Trend --}}
+        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+            <h3 class="text-base font-bold text-gray-900">Pergerakan Barang (30 Hari)</h3>
+            <p class="text-xs text-gray-500 mt-1">Frekuensi terjual dan masuknya stok baru</p>
+            <div class="mt-6 relative" style="height: 280px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        {{-- Chart 2: Revenue Trend --}}
+        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+            <h3 class="text-base font-bold text-gray-900">Grafik Pemasukan (30 Hari)</h3>
+            <p class="text-xs text-gray-500 mt-1">Uang kotor yang didapat per hari (sudah potong diskon)</p>
+            <div class="mt-6 relative" style="height: 280px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {{-- Charts Row 2 --}}
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {{-- Chart 3: Top Products --}}
+        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+            <h3 class="text-base font-bold text-gray-900">5 Produk Paling Laris</h3>
+            <p class="text-xs text-gray-500 mt-1">Berdasarkan jumlah terjual terbanyak</p>
+            <div class="mt-6 relative" style="height: 260px;">
+                <canvas id="topProductsChart"></canvas>
+            </div>
+        </div>
+
+        {{-- Chart 4: Stock Asset by Category --}}
+        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+            <h3 class="text-base font-bold text-gray-900">Persentase Aset</h3>
+            <p class="text-xs text-gray-500 mt-1">Persentase modal Anda berbentuk produk (%)</p>
+            <div class="mt-6 flex items-center justify-center relative" style="height: 260px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+
 
     {{-- Chart.js CDN --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
