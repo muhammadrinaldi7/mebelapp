@@ -18,6 +18,8 @@ class Sales extends Component
     use WithPagination;
 
     public $showForm = false;
+    public $showEditForm = false;
+    public $editingTransactionId = null;
     public $reference_code = '';
     public $transaction_date = '';
     public $notes = '';
@@ -30,6 +32,18 @@ class Sales extends Component
     public $discount = 0;
     public $shipping_cost = 0;
 
+    // Mebel Specific
+    public $payment_status = 'lunas';
+    public $down_payment = 0;
+    public $shipping_status = 'bawa_sendiri';
+    public $driver_name = '';
+
+    // Edit Specific
+    public $edit_payment_status = 'lunas';
+    public $edit_down_payment = 0;
+    public $edit_shipping_status = 'bawa_sendiri';
+    public $edit_driver_name = '';
+
     public $search = '';
 
     protected $rules = [
@@ -40,6 +54,10 @@ class Sales extends Component
         'customer_address' => 'nullable|string',
         'discount' => 'nullable|numeric|min:0',
         'shipping_cost' => 'nullable|numeric|min:0',
+        'payment_status' => 'required|in:lunas,dp,belum_dibayar',
+        'down_payment' => 'nullable|numeric|min:0',
+        'shipping_status' => 'required|in:bawa_sendiri,menunggu_dikirim,sedang_dikirim,sudah_diterima',
+        'driver_name' => 'nullable|string|max:255',
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity' => 'required|integer|min:1',
@@ -59,11 +77,15 @@ class Sales extends Component
 
     public function openForm()
     {
-        $this->reset(['reference_code', 'notes', 'items', 'customer_name', 'customer_phone', 'customer_address', 'discount', 'shipping_cost']);
+        $this->reset(['reference_code', 'notes', 'items', 'customer_name', 'customer_phone', 'customer_address', 'discount', 'shipping_cost', 'payment_status', 'down_payment', 'shipping_status', 'driver_name']);
         $this->transaction_date = now()->format('Y-m-d');
         $this->reference_code = 'SALE-' . date('YmdHis');
         $this->discount = 0;
         $this->shipping_cost = 0;
+        $this->payment_status = 'lunas';
+        $this->down_payment = 0;
+        $this->shipping_status = 'bawa_sendiri';
+        $this->driver_name = '';
         $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
         $this->showForm = true;
     }
@@ -122,6 +144,10 @@ class Sales extends Component
                 'total_amount' => $totalAmount,
                 'discount' => $this->discount ?: 0,
                 'shipping_cost' => $this->shipping_cost ?: 0,
+                'payment_status' => $this->payment_status,
+                'down_payment' => $this->payment_status === 'dp' ? ($this->down_payment ?: 0) : 0,
+                'shipping_status' => $this->shipping_status,
+                'driver_name' => $this->shipping_status !== 'bawa_sendiri' ? $this->driver_name : null,
             ]);
 
             foreach ($this->items as $item) {
@@ -136,6 +162,41 @@ class Sales extends Component
 
         $this->showForm = false;
         session()->flash('message', 'Penjualan berhasil disimpan.');
+    }
+
+    public function openEditForm($id)
+    {
+        $transaction = Transaction::find($id);
+        if ($transaction) {
+            $this->editingTransactionId = $transaction->id;
+            $this->edit_payment_status = $transaction->payment_status ?? 'lunas';
+            $this->edit_down_payment = (float)($transaction->down_payment ?? 0);
+            $this->edit_shipping_status = $transaction->shipping_status ?? 'bawa_sendiri';
+            $this->edit_driver_name = $transaction->driver_name ?? '';
+            $this->showEditForm = true;
+        }
+    }
+
+    public function updateStatus()
+    {
+        $this->validate([
+            'edit_payment_status' => 'required|in:lunas,dp,belum_dibayar',
+            'edit_down_payment' => 'nullable|numeric|min:0',
+            'edit_shipping_status' => 'required|in:bawa_sendiri,menunggu_dikirim,sedang_dikirim,sudah_diterima',
+            'edit_driver_name' => 'nullable|string|max:255',
+        ]);
+
+        $transaction = Transaction::find($this->editingTransactionId);
+        if ($transaction) {
+            $transaction->update([
+                'payment_status' => $this->edit_payment_status,
+                'down_payment' => $this->edit_payment_status === 'dp' ? ($this->edit_down_payment ?: 0) : 0,
+                'shipping_status' => $this->edit_shipping_status,
+                'driver_name' => $this->edit_shipping_status !== 'bawa_sendiri' ? $this->edit_driver_name : null,
+            ]);
+            $this->showEditForm = false;
+            session()->flash('message', 'Status transaksi berhasil diperbarui.');
+        }
     }
 
     public function getSubtotalProperty()
