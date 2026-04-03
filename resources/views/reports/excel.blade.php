@@ -136,13 +136,18 @@
                 </tr>
             </thead>
             <tbody>
-                @php $totalProfit = 0; @endphp
+                @php $totalProfit = 0; $uniqueTransactions = []; $totalDiscount = 0; @endphp
                 @foreach($profitDetails as $detail)
                 @php
                     $hpp = $detail->product->base_price ?? 0;
                     $profit_per_unit = $detail->price_at_transaction - $hpp;
                     $total_profit = $profit_per_unit * $detail->quantity;
                     $totalProfit += $total_profit;
+                    
+                    if (!isset($uniqueTransactions[$detail->transaction_id])) {
+                        $uniqueTransactions[$detail->transaction_id] = true;
+                        $totalDiscount += $detail->transaction->discount;
+                    }
                 @endphp
                 <tr>
                     <td>{{ $detail->transaction->transaction_date->format('d/m/Y') }}</td>
@@ -155,8 +160,16 @@
                 </tr>
                 @endforeach
                 <tr>
-                    <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL Laba Kotor (GROSS PROFIT)</td>
+                    <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL Keuntungan (Belum Potongan)</td>
                     <td style="text-align: right; font-weight: bold;">{{ $totalProfit }}</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL Potongan Diskon</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $totalDiscount }}</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: right; font-weight: bold;">TOTAL Laba Kotor (Sudah Termasuk Potongan)</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $totalProfit - $totalDiscount }}</td>
                 </tr>
             </tbody>
         </table>

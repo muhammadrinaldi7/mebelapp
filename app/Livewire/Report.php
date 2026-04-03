@@ -160,12 +160,20 @@ class Report extends Component
         if ($this->activeTab === 'profit') {
             $qp = clone $this->getProfitQuery();
             $items = $qp->get();
+            
+            $uniqueTransactionIds = $items->pluck('transaction_id')->unique();
+            $totalDiscount = Transaction::whereIn('id', $uniqueTransactionIds)->sum('discount');
+            
             $grossProfit = $items->sum(fn($d) => ($d->price_at_transaction - ($d->product->base_price ?? 0)) * $d->quantity);
+            $netGrossProfit = $grossProfit - $totalDiscount;
+
             return [
                 'totalSalesItems' => $items->count(),
                 'totalRevenue' => $items->sum(fn($d) => $d->price_at_transaction * $d->quantity),
                 'totalCost' => $items->sum(fn($d) => ($d->product->base_price ?? 0) * $d->quantity),
+                'totalDiscount' => $totalDiscount,
                 'grossProfit' => $grossProfit,
+                'netGrossProfit' => $netGrossProfit,
             ];
         }
     }

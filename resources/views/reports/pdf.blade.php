@@ -162,13 +162,18 @@
                 </tr>
             </thead>
             <tbody>
-                @php $totalProfit = 0; @endphp
+                @php $totalProfit = 0; $uniqueTransactions = []; $totalDiscount = 0; @endphp
                 @foreach($profitDetails as $detail)
                 @php
                     $hpp = $detail->product->base_price ?? 0;
                     $profit_per_unit = $detail->price_at_transaction - $hpp;
                     $total_profit = $profit_per_unit * $detail->quantity;
                     $totalProfit += $total_profit;
+                    
+                    if (!isset($uniqueTransactions[$detail->transaction_id])) {
+                        $uniqueTransactions[$detail->transaction_id] = true;
+                        $totalDiscount += $detail->transaction->discount;
+                    }
                 @endphp
                 <tr>
                     <td>{{ $detail->transaction->transaction_date->format('d/m/Y') }}</td>
@@ -181,8 +186,16 @@
                 </tr>
                 @endforeach
                 <tr>
-                    <td colspan="6" class="text-right font-bold">TOTAL KEUNTUNGAN KOTOR</td>
+                    <td colspan="6" class="text-right font-bold">TOTAL KEUNTUNGAN (BELUM POTONGAN)</td>
                     <td class="text-right font-bold">Rp {{ number_format($totalProfit, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="text-right font-bold">TOTAL POTONGAN DISKON</td>
+                    <td class="text-right font-bold">- Rp {{ number_format($totalDiscount, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="text-right font-bold">TOTAL LABA KOTOR (SUDAH TERMASUK POTONGAN)</td>
+                    <td class="text-right font-bold">Rp {{ number_format($totalProfit - $totalDiscount, 0, ',', '.') }}</td>
                 </tr>
             </tbody>
         </table>
