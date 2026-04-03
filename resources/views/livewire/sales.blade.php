@@ -101,6 +101,44 @@
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror
                     </div>
+
+                    <div class="col-span-full mt-2">
+                        <h4 class="text-sm font-semibold text-gray-800 border-b pb-2 mb-3 mt-4"># Pembayaran & Pengiriman</h4>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Status Pembayaran</label>
+                        <select wire:model.live="payment_status" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                            <option value="lunas">Lunas (Cash)</option>
+                            <option value="dp">Hutang / DP (Cicilan)</option>
+                            <option value="belum_dibayar">Belum Dibayar</option>
+                        </select>
+                    </div>
+                    @if($payment_status === 'dp')
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nominal DP / Masuk (Rp)</label>
+                        <input wire:model="down_payment" type="number" min="0" placeholder="Misal: 500000" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                        @error('down_payment') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                    @else
+                    <div class="hidden lg:block"></div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Armada / Pengiriman</label>
+                        <select wire:model.live="shipping_status" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                            <option value="bawa_sendiri">Pembeli Bawa Sendiri</option>
+                            <option value="menunggu_dikirim">Menunggu Jadwal Dikirim</option>
+                            <option value="sedang_dikirim">Sedang Di Perjalanan</option>
+                            <option value="sudah_diterima">Selesai Dikirim/Diterima</option>
+                        </select>
+                    </div>
+                    @if($shipping_status !== 'bawa_sendiri')
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama Supir / Driver</label>
+                        <input wire:model="driver_name" type="text" placeholder="Misal: Bapak Anto" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                        @error('driver_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                    @endif
                 </div>
 
                 <div class="mt-6">
@@ -262,8 +300,25 @@
                         <tr class="hover:bg-gray-50/50">
                             <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
                                 <div class="font-bold text-gray-900">{{ $trx->reference_code }}</div>
-                                <div class="text-xs font-medium text-gray-500 mt-0.5">
+                                <div class="text-xs font-medium text-gray-500 mt-0.5 mb-1.5">
                                     {{ $trx->transaction_date->format('d/m/Y') }}</div>
+                                <div class="flex flex-col gap-1 items-start mt-1">
+                                    @if($trx->payment_status === 'lunas')
+                                        <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-[10px] font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Lunas</span>
+                                    @elseif($trx->payment_status === 'dp')
+                                        <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-[10px] font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20" title="DP: Rp {{ number_format($trx->down_payment, 0, ',', '.') }}">DP (Hutang)</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Belum Bayar</span>
+                                    @endif
+                                    
+                                    @if($trx->shipping_status === 'bawa_sendiri')
+                                        <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Bawa Sendiri</span>
+                                    @elseif($trx->shipping_status === 'sudah_diterima')
+                                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">Terkirim</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">{{ str_replace('_', ' ', Str::title($trx->shipping_status)) }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="py-4 px-3 text-sm">
                                 @if ($trx->customer_name)
@@ -297,15 +352,22 @@
                                     {{ number_format($grand, 0, ',', '.') }}</div>
                             </td>
                             <td class="whitespace-nowrap px-3 py-4 text-center">
-                                <a href="{{ route('sales.invoice', $trx->id) }}" target="_blank"
-                                    class="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-900 hover:bg-gray-800 transition-colors">
-                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v3.396c0 .621.504 1.125 1.125 1.125h8.25c.621 0 1.125-.504 1.125-1.125v-3.396zm-9-5.25C8.25 7.618 9.382 6.5 10.75 6.5h2.5c1.368 0 2.5 1.118 2.5 2.5v.75m-6-1.5z" />
-                                    </svg>
-                                    Cetak Nota
-                                </a>
+                                <div class="flex flex-col gap-2 items-center">
+                                    <button type="button" wire:click="openEditForm({{ $trx->id }})"
+                                        class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-700/10 hover:bg-indigo-100 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        Update Status
+                                    </button>
+                                    <a href="{{ route('sales.invoice', $trx->id) }}" target="_blank"
+                                        class="inline-flex w-full justify-center items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-900 hover:bg-gray-800 transition-colors">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v3.396c0 .621.504 1.125 1.125 1.125h8.25c.621 0 1.125-.504 1.125-1.125v-3.396zm-9-5.25C8.25 7.618 9.382 6.5 10.75 6.5h2.5c1.368 0 2.5 1.118 2.5 2.5v.75m-6-1.5z" />
+                                        </svg>
+                                        Cetak Nota
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -319,4 +381,62 @@
         </div>
     </div>
     <div class="mt-4">{{ $transactions->links() }}</div>
+
+    {{-- Modal Update Status --}}
+    @if($showEditForm)
+    <div class="relative z-50">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900 border-b pb-2">Update Progres Transaksi</h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Status Pembayaran</label>
+                                        <select wire:model.live="edit_payment_status" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                            <option value="lunas">Lunas (Cash)</option>
+                                            <option value="dp">Hutang / DP (Cicilan)</option>
+                                            <option value="belum_dibayar">Belum Dibayar</option>
+                                        </select>
+                                    </div>
+                                    @if($edit_payment_status === 'dp')
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nominal DP / Masuk (Rp)</label>
+                                        <input wire:model="edit_down_payment" type="number" min="0" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                        @error('edit_down_payment') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Armada / Pengiriman</label>
+                                        <select wire:model.live="edit_shipping_status" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                            <option value="bawa_sendiri">Pembeli Bawa Sendiri</option>
+                                            <option value="menunggu_dikirim">Menunggu Jadwal Dikirim</option>
+                                            <option value="sedang_dikirim">Sedang Di Perjalanan</option>
+                                            <option value="sudah_diterima">Selesai Dikirim/Diterima</option>
+                                        </select>
+                                    </div>
+                                    @if($edit_shipping_status !== 'bawa_sendiri')
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama Supir / Driver</label>
+                                        <input wire:model="edit_driver_name" type="text" class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                        @error('edit_driver_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <button type="button" wire:click="updateStatus" class="inline-flex w-full justify-center rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">Simpan Update</button>
+                        <button type="button" wire:click="$set('showEditForm', false)" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

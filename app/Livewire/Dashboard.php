@@ -24,15 +24,17 @@ class Dashboard extends Component
         $thisMonth = Carbon::now()->startOfMonth();
         $totalRevenueThisMonth = Transaction::where('type', 'sale')
                                 ->where('transaction_date', '>=', $thisMonth)
-                                ->sum('total_amount');
+                                ->sum(DB::raw('total_amount - COALESCE(discount, 0) + COALESCE(shipping_cost, 0)'));
         
-        // Cuan kotor bulan ini: (Selling Price - Base Price) * Qty
-        // Dari transaction_details table join products where type is sale and date >= thisMonth
-        $grossProfitThisMonth = TransactionDetail::join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
+        // Modal Pokok Terjual (COGS) bulan ini: Base Price * Qty
+        $cogsThisMonth = TransactionDetail::join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')
             ->join('products', 'transaction_details.product_id', '=', 'products.id')
             ->where('transactions.type', 'sale')
             ->where('transactions.transaction_date', '>=', $thisMonth)
-            ->sum(DB::raw('(transaction_details.price_at_transaction - products.base_price) * transaction_details.quantity'));
+            ->sum(DB::raw('transaction_details.quantity * products.base_price'));
+
+        // Cuan Kotor = Uang Masuk Bersih (Revenue) - Modal Pokok Terjual
+        $grossProfitThisMonth = $totalRevenueThisMonth - $cogsThisMonth;
 
         // --- Chart 1 & 2: Trend & Revenue last 30 days ---
         $days = collect();
@@ -56,7 +58,8 @@ class Dashboard extends Component
         
         // Daily revenue 
         $revenueTrend = $days->map(fn($d) => (int) $transactions30Days->where('type', 'sale')
-            ->filter(fn($trx) => Carbon::parse($trx->transaction_date)->isSameDay($d))->sum('total_amount'))->toArray();
+            ->filter(fn($trx) => Carbon::parse($trx->transaction_date)->isSameDay($d))
+            ->sum(fn($trx) => $trx->total_amount - ($trx->discount ?? 0) + ($trx->shipping_cost ?? 0)))->toArray();
 
         // --- Chart 3: Top 5 selling products (Based on Value & Qty) ---
         $topProducts = TransactionDetail::join('transactions', 'transaction_details.transaction_id', '=', 'transactions.id')

@@ -23,11 +23,16 @@ class Transaction extends Model
         'total_amount',
         'discount',
         'shipping_cost',
+        'payment_status',
+        'down_payment',
+        'shipping_status',
+        'driver_name',
     ];
 
     protected $casts = [
         'transaction_date' => 'date',
         'total_amount' => 'decimal:2',
+        'down_payment' => 'decimal:2',
     ];
 
     public function user(): BelongsTo

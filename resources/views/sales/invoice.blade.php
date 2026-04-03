@@ -239,7 +239,8 @@
             </div>
             <div class="invoice-info">
                 <p><strong>Tanggal Transaksi:</strong> {{ $transaction->transaction_date->format('d/m/Y') }}</p>
-                <p><strong>Tgl Cetak:</strong> {{ date('d/m/Y H:i') }}</p>
+                <p><strong>Status Pembayaran:</strong> {{ $transaction->payment_status === 'dp' ? 'DP (Hutang)' : ($transaction->payment_status === 'lunas' ? 'LUNAS' : 'Belum Dibayar') }}</p>
+                <p><strong>Status Pengiriman:</strong> {{ str_replace('_', ' ', Str::title($transaction->shipping_status)) }} @if($transaction->driver_name) (Supir: {{ $transaction->driver_name }}) @endif</p>
                 @if ($transaction->notes)
                     <p><strong>Keterangan:</strong> {{ $transaction->notes }}</p>
                 @endif
@@ -301,6 +302,17 @@
                     <td class="text-right font-bold" style="font-size: 14px;">
                         {{ number_format($grandTotal, 0, ',', '.') }}</td>
                 </tr>
+                @if($transaction->payment_status === 'dp')
+                    <tr>
+                        <th>Uang Muka / DP (-) :</th>
+                        <td class="text-right">{{ number_format($transaction->down_payment, 0, ',', '.') }}</td>
+                    </tr>
+                    <tr>
+                        <th style="font-size: 14px; text-decoration: underline;">SISA TAGIHAN (Rp) :</th>
+                        <td class="text-right font-bold" style="font-size: 14px; text-decoration: underline;">
+                            {{ number_format($grandTotal - $transaction->down_payment, 0, ',', '.') }}</td>
+                    </tr>
+                @endif
             </table>
         </div>
 
