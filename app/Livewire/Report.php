@@ -200,3 +200,4 @@ class Report extends Component
         ], $data));
     }
 }
+

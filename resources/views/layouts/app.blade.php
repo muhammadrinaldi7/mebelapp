@@ -88,6 +88,56 @@
                 @endisset
             </main>
         </div>
+
+        {{-- Global Toast Notification --}}
+        <div x-data="{
+                toasts: [],
+                add(type, message) {
+                    const id = Date.now();
+                    this.toasts.push({ id, type, message });
+                    setTimeout(() => this.remove(id), 5000);
+                },
+                remove(id) {
+                    this.toasts = this.toasts.filter(t => t.id !== id);
+                }
+            }"
+            @notify.window="add($event.detail.type, $event.detail.message)"
+            class="fixed bottom-5 right-5 z-100 flex flex-col gap-3 pointer-events-none">
+            
+            <template x-for="toast in toasts" :key="toast.id">
+                <div x-show="toast"
+                    x-transition:enter="transition ease-out duration-300 transform"
+                    x-transition:enter-start="opacity-0 translate-y-4"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-200 transform"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 translate-y-4"
+                    class="pointer-events-auto w-80 max-w-sm rounded-xl overflow-hidden bg-white/90 backdrop-blur-xl shadow-lg ring-1 ring-black/5 flex items-start gap-0.5 relative group">
+                    <div class="shrink-0 w-12 flex items-center justify-center p-3 relative" 
+                        :class="toast.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'">
+                        <div class="absolute inset-y-0 right-0 w-px" :class="toast.type === 'error' ? 'bg-red-100' : 'bg-emerald-100'"></div>
+                        <template x-if="toast.type === 'error'">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </template>
+                        <template x-if="toast.type !== 'error'">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </template>
+                    </div>
+                    <div class="flex-1 p-3 px-4">
+                        <p class="text-xs font-bold uppercase tracking-wider mb-0.5" :class="toast.type === 'error' ? 'text-red-700' : 'text-emerald-700'" x-text="toast.type === 'error' ? 'Proses Gagal' : 'Berhasil'"></p>
+                        <p class="text-sm font-medium text-gray-700" x-text="toast.message"></p>
+                    </div>
+                    <button @click="remove(toast.id)" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <!-- Loading bar animation -->
+                    <div class="absolute bottom-0 left-0 h-1 bg-linear-to-r" 
+                        :class="toast.type === 'error' ? 'from-red-500 to-orange-400' : 'from-emerald-500 to-green-400'"
+                        style="animation: shrink-toast infinite 5000ms linear;" x-ref="loader"></div>
+                </div>
+            </template>
+        </div>
+        <style>@keyframes shrink-toast { from { width: 100%; } to { width: 0%; } }</style>
     </div>
     @livewireScripts
 </body>

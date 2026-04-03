@@ -54,11 +54,11 @@ class RoleManagement extends Component
             $role = Role::findOrFail($this->roleId);
             $role->update(['name' => $this->name]);
             $role->syncPermissions($this->selectedPermissions);
-            session()->flash('message', 'Role berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'Role berhasil diperbarui.');
         } else {
             $role = Role::create(['name' => $this->name]);
             $role->syncPermissions($this->selectedPermissions);
-            session()->flash('message', 'Role berhasil ditambahkan.');
+            $this->dispatch('notify', type: 'success', message: 'Role berhasil ditambahkan.');
         }
 
         $this->showModal = false;
@@ -76,7 +76,7 @@ class RoleManagement extends Component
         Role::findOrFail($this->deleteId)->delete();
         $this->confirmingDelete = false;
         $this->deleteId = null;
-        session()->flash('message', 'Role berhasil dihapus.');
+        $this->dispatch('notify', type: 'success', message: 'Role berhasil dihapus.');
     }
 
     public function createPermission()
@@ -85,13 +85,13 @@ class RoleManagement extends Component
         Permission::create(['name' => $this->permissionName]);
         $this->permissionName = '';
         $this->showPermissionModal = false;
-        session()->flash('message', 'Permission berhasil ditambahkan.');
+        $this->dispatch('notify', type: 'success', message: 'Permission berhasil ditambahkan.');
     }
 
     public function deletePermission($id)
     {
         Permission::findOrFail($id)->delete();
-        session()->flash('message', 'Permission berhasil dihapus.');
+        $this->dispatch('notify', type: 'success', message: 'Permission berhasil dihapus.');
     }
 
     public function render()
@@ -102,3 +102,4 @@ class RoleManagement extends Component
         ]);
     }
 }
+

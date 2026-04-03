@@ -94,10 +94,10 @@ class ProductIndex extends Component
 
         if ($this->editMode) {
             Product::findOrFail($this->productId)->update($data);
-            session()->flash('message', 'Produk berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'Produk berhasil diperbarui.');
         } else {
             Product::create($data);
-            session()->flash('message', 'Produk berhasil ditambahkan.');
+            $this->dispatch('notify', type: 'success', message: 'Produk berhasil ditambahkan.');
         }
 
         $this->showModal = false;
@@ -115,7 +115,7 @@ class ProductIndex extends Component
         Product::findOrFail($this->deleteId)->delete();
         $this->confirmingDelete = false;
         $this->deleteId = null;
-        session()->flash('message', 'Produk berhasil dihapus.');
+        $this->dispatch('notify', type: 'success', message: 'Produk berhasil dihapus.');
     }
 
     public function render()
@@ -138,3 +138,4 @@ class ProductIndex extends Component
         ]);
     }
 }
+
