@@ -29,6 +29,7 @@ class Sales extends Component
     public $customer_name = '';
     public $customer_phone = '';
     public $customer_address = '';
+    public $salesperson_name = '';
     public $discount = 0;
     public $shipping_cost = 0;
 
@@ -52,6 +53,7 @@ class Sales extends Component
         'customer_name' => 'nullable|string|max:255',
         'customer_phone' => 'nullable|string|max:50',
         'customer_address' => 'nullable|string',
+        'salesperson_name' => 'nullable|string|max:255',
         'discount' => 'nullable|numeric|min:0',
         'shipping_cost' => 'nullable|numeric|min:0',
         'payment_status' => 'required|in:lunas,dp,belum_dibayar',
@@ -77,7 +79,7 @@ class Sales extends Component
 
     public function openForm()
     {
-        $this->reset(['reference_code', 'notes', 'items', 'customer_name', 'customer_phone', 'customer_address', 'discount', 'shipping_cost', 'payment_status', 'down_payment', 'shipping_status', 'driver_name']);
+        $this->reset(['reference_code', 'notes', 'items', 'customer_name', 'customer_phone', 'customer_address', 'salesperson_name', 'discount', 'shipping_cost', 'payment_status', 'down_payment', 'shipping_status', 'driver_name']);
         $this->transaction_date = now()->format('Y-m-d');
         $this->reference_code = 'SALE-' . date('YmdHis');
         $this->discount = 0;
@@ -140,6 +142,7 @@ class Sales extends Component
                 'customer_name' => $this->customer_name,
                 'customer_phone' => $this->customer_phone,
                 'customer_address' => $this->customer_address,
+                'salesperson_name' => $this->salesperson_name,
                 'notes' => $this->notes,
                 'total_amount' => $totalAmount,
                 'discount' => $this->discount ?: 0,

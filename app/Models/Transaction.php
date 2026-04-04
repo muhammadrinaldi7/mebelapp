@@ -17,6 +17,7 @@ class Transaction extends Model
         'customer_name',
         'customer_phone',
         'customer_address',
+        'salesperson_name',
         'reference_code',
         'transaction_date',
         'notes',
