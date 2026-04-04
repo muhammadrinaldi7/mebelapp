@@ -63,6 +63,15 @@
                         @enderror
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
+                            Sales / Penjual</label>
+                        <input wire:model="salesperson_name" type="text" placeholder="Misal: Bapak Andi"
+                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                        @error('salesperson_name')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div>
                         <label
                             class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Keterangan
                             Umum</label>
@@ -353,7 +362,19 @@
                                         <div class="text-xs text-gray-500">☎ {{ $trx->customer_phone }}</div>
                                     @endif
                                 @else
-                                    <span class="text-gray-400 italic">Umum (Tidak terdata)</span>
+                                    <div class="text-gray-400 italic text-xs">Umum (Tidak terdata)</div>
+                                @endif
+
+                                @if ($trx->salesperson_name)
+                                    <div
+                                        class="mt-2 text-[10px] font-semibold text-indigo-600 bg-indigo-50 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-indigo-100">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                        </svg>
+                                        Sales: {{ $trx->salesperson_name }}
+                                    </div>
                                 @endif
                             </td>
                             <td class="px-3 py-4 text-sm text-gray-500">
@@ -417,7 +438,7 @@
     {{-- Modal Update Status --}}
     @if ($showEditForm)
         <div class="relative z-50">
-            <div class="fixed inset-0 bg-white/80 blur-md bg-opacity-75 transition-opacity"></div>
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                     <div
@@ -459,9 +480,7 @@
                                             <select wire:model.live="edit_shipping_status"
                                                 class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                                                 <option value="bawa_sendiri">Pembeli Bawa Sendiri</option>
-                                                <option value="menunggu_dikirim">Menunggu Jadwal Dikirim</option>
-                                                <option value="sedang_dikirim">Sedang Di Perjalanan</option>
-                                                <option value="sudah_diterima">Selesai Dikirim/Diterima</option>
+                                                <option value="menunggu_dikirim">Dikirim</option>
                                             </select>
                                         </div>
                                         @if ($edit_shipping_status !== 'bawa_sendiri')

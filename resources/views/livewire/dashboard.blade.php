@@ -199,13 +199,13 @@
         </div>
 
         {{-- Chart 4: Stock Asset by Category --}}
-        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
+        {{-- <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5">
             <h3 class="text-base font-bold text-gray-900">Persentase Aset</h3>
             <p class="text-xs text-gray-500 mt-1">Persentase modal Anda berbentuk produk (%)</p>
             <div class="mt-6 flex items-center justify-center relative" style="height: 260px;">
                 <canvas id="categoryChart"></canvas>
             </div>
-        </div>
+        </div> --}}
     </div>
 
 
