@@ -18,4 +18,16 @@ class SalesController extends Controller
 
         return view('sales.invoice', compact('transaction'));
     }
+
+    public function deliveryNote($id)
+    {
+        $transaction = Transaction::with(['user', 'details.product'])->findOrFail($id);
+        
+        // Ensure it is a sale transaction
+        if ($transaction->type !== 'sale') {
+            abort(404, 'Bukan transaksi penjualan.');
+        }
+
+        return view('sales.delivery_note', compact('transaction'));
+    }
 }

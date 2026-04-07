@@ -24,8 +24,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/categories', CategoryIndex::class)->name('categories.index');
     Route::get('/transactions/in', TransactionIn::class)->name('transactions.in');
     Route::get('/transactions/out', TransactionOut::class)->name('transactions.out');
+    Route::get('/transactions/out/{id}/print', [App\Http\Controllers\TransactionOutController::class, 'print'])->name('transactions.out.print');
     Route::get('/sales', Sales::class)->name('sales.index');
     Route::get('/sales/{id}/invoice', [App\Http\Controllers\SalesController::class, 'invoice'])->name('sales.invoice');
+    Route::get('/sales/{id}/delivery-note', [App\Http\Controllers\SalesController::class, 'deliveryNote'])->name('sales.delivery_note');
     Route::get('/reports', Report::class)->name('reports.index');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('report.export');
 

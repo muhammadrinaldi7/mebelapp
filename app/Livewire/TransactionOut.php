@@ -20,7 +20,7 @@ class TransactionOut extends Component
     public $showForm = false;
     public $reference_code = '';
     public $transaction_date = '';
-    public $out_reason = 'Rusak';
+    public $out_reason = 'Pindah';
     public $notes = '';
     public $items = [];
 
@@ -33,13 +33,12 @@ class TransactionOut extends Component
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity' => 'required|integer|min:1',
-        'items.*.price' => 'required|numeric|min:0',
     ];
 
     public function mount()
     {
         $this->transaction_date = now()->format('Y-m-d');
-        $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
+        $this->items = [['product_id' => '', 'quantity' => 1]];
     }
 
     public function updatingSearch()
@@ -52,14 +51,14 @@ class TransactionOut extends Component
         $this->reset(['reference_code', 'notes', 'items', 'out_reason']);
         $this->transaction_date = now()->format('Y-m-d');
         $this->reference_code = 'OUT-' . date('YmdHis');
-        $this->out_reason = 'Rusak';
-        $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
+        $this->out_reason = 'Pindah';
+        $this->items = [['product_id' => '', 'quantity' => 1]];
         $this->showForm = true;
     }
 
     public function addItem()
     {
-        $this->items[] = ['product_id' => '', 'quantity' => 1, 'price' => 0];
+        $this->items[] = ['product_id' => '', 'quantity' => 1];
     }
 
     public function removeItem($index)
@@ -84,8 +83,6 @@ class TransactionOut extends Component
         }
 
         DB::transaction(function () {
-            $totalAmount = collect($this->items)->sum(fn($item) => $item['quantity'] * $item['price']);
-            
             $formattedNotes = "[{$this->out_reason}] " . $this->notes;
 
             $transaction = Transaction::create([
@@ -94,7 +91,7 @@ class TransactionOut extends Component
                 'reference_code' => $this->reference_code,
                 'transaction_date' => $this->transaction_date,
                 'notes' => trim($formattedNotes),
-                'total_amount' => $totalAmount,
+                'total_amount' => 0, // Harga tidak relevan untuk barang keluar
             ]);
 
             foreach ($this->items as $item) {
@@ -102,7 +99,7 @@ class TransactionOut extends Component
                     'transaction_id' => $transaction->id,
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
-                    'price_at_transaction' => $item['price'],
+                    'price_at_transaction' => 0,
                 ]);
             }
         });
@@ -125,4 +122,3 @@ class TransactionOut extends Component
         ]);
     }
 }
-
