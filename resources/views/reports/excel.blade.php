@@ -173,6 +173,37 @@
                 </tr>
             </tbody>
         </table>
+    @elseif($tab === 'buy_price')
+        <table>
+            <thead>
+                <tr><th colspan="5" style="text-align: center; font-size: 16px; font-weight: bold;">{{ $reportTitle ?? 'Analisa Harga Beli' }}</th></tr>
+                <tr><th colspan="5" style="text-align: center;">Periode: {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : 'Awal' }} - {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y') : 'Akhir' }}</th></tr>
+                <tr><th colspan="5"></th></tr>
+                <tr>
+                    <th style="font-weight: bold; text-align: left;">Tanggal Masuk</th>
+                    <th style="font-weight: bold; text-align: left;">No. Referensi</th>
+                    <th style="font-weight: bold; text-align: center;">Kuantitas</th>
+                    <th style="font-weight: bold; text-align: right;">Harga Beli / Unit</th>
+                    <th style="font-weight: bold; text-align: right;">Total Nilai Transaksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($priceHistory as $hist)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($hist->transaction->transaction_date)->format('d/m/Y') }}</td>
+                    <td>{{ $hist->transaction->reference_code }}</td>
+                    <td style="text-align: center; font-weight: bold;">{{ $hist->quantity }}</td>
+                    <td style="text-align: right; border: 1px solid #000; color: #ef4444; font-weight: bold;">{{ $hist->price_at_transaction }}</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $hist->price_at_transaction * $hist->quantity }}</td>
+                </tr>
+                @endforeach
+                @if(count($priceHistory) === 0)
+                <tr>
+                    <td colspan="5" style="text-align: center;">Belum ada riwayat transaksi barang masuk untuk produk ini di rentang waktu terpilih.</td>
+                </tr>
+                @endif
+            </tbody>
+        </table>
     @endif
 </body>
 </html>

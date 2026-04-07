@@ -18,7 +18,7 @@ class Report extends Component
 {
     use WithPagination;
 
-    public string $activeTab = 'transactions'; // transactions, stock, movement, profit
+    public string $activeTab = 'transactions'; // transactions, stock, movement, profit, buy_price
 
     // Common Filters
     public string $search = '';
@@ -32,6 +32,9 @@ class Report extends Component
     public $categoryId = '';
     public $brandId = '';
 
+    // Buy Price Analysis Filters
+    public $compareProductId = '';
+
     public function mount()
     {
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
@@ -44,6 +47,7 @@ class Report extends Component
     public function updatingReportType() { $this->resetPage(); }
     public function updatingCategoryId() { $this->resetPage(); }
     public function updatingBrandId() { $this->resetPage(); }
+    public function updatingCompareProductId() { $this->resetPage(); }
 
     public function setTab($tab)
     {
@@ -176,6 +180,12 @@ class Report extends Component
                 'netGrossProfit' => $netGrossProfit,
             ];
         }
+
+        if ($this->activeTab === 'buy_price') {
+            // Summary logic if needed for buy_price
+            return [];
+        }
+
     }
 
     public function render()
@@ -193,6 +203,32 @@ class Report extends Component
             $data['productsMove'] = $this->getMovementQuery()->paginate(15);
         } elseif ($this->activeTab === 'profit') {
             $data['profitDetails'] = $this->getProfitQuery()->paginate(15);
+        } elseif ($this->activeTab === 'buy_price') {
+            $data['productsFilter'] = Product::orderBy('name')->get();
+            
+            // Query for specific product
+            if ($this->compareProductId) {
+                // Get history of incoming transactions for the product
+                $history = TransactionDetail::with('transaction')
+                    ->where('product_id', $this->compareProductId)
+                    ->whereHas('transaction', fn($q) => $q->where('type', 'in')
+                        ->when($this->dateFrom, fn($q2) => $q2->whereDate('transaction_date', '>=', $this->dateFrom))
+                        ->when($this->dateTo, fn($q2) => $q2->whereDate('transaction_date', '<=', $this->dateTo))
+                    )
+                    ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
+                    ->orderBy('transactions.transaction_date', 'asc')
+                    ->select('transaction_details.*') // Ensure we get detail columns, not joined duplicates
+                    ->get();
+                
+                $data['priceHistory'] = $history;
+                
+                $data['chartLabels'] = $history->map(fn($d) => Carbon::parse($d->transaction->transaction_date)->format('d M Y'))->toArray();
+                $data['chartPrices'] = $history->map(fn($d) => (float) $d->price_at_transaction)->toArray();
+            } else {
+                $data['priceHistory'] = collect();
+                $data['chartLabels'] = [];
+                $data['chartPrices'] = [];
+            }
         }
 
         return view('livewire.report', array_merge([
