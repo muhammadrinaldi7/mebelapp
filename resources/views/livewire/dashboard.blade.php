@@ -3,7 +3,8 @@
     <p class="mt-1 text-sm text-gray-500">Ringkasan statistik, valuasi aset, dan performa bisnis bulan ini.</p>
 
     {{-- Stats Cards - Grade A Financial Focus --}}
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
+    @if(Auth::user()->hasRole('admin'))
+        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
         {{-- Card 1: Valuasi Aset --}}
         {{-- <div class="overflow-hidden rounded-2xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-900/5 bg-linear-to-br from-indigo-50 to-white">
             <div class="flex items-center gap-3">
@@ -68,6 +69,52 @@
                 </div>
             </div>
         </div> --}}
+        </div>
+    @endif
+
+    {{-- Pencarian Harga Jual (Bisa untuk Semua Role) --}}
+    <div class="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-900/5">
+        <h2 class="text-sm font-bold text-gray-900 mb-4">Pengecekkan Harga Jual</h2>
+        <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <input wire:model.live.debounce.300ms="searchPrice" type="text" placeholder="Ketik nama atau kode barang untuk melihat harganya..."
+                class="block w-full rounded-xl border-0 py-3 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </div>
+        
+        @if(strlen($searchPrice) > 1)
+            <div class="mt-4 overflow-hidden rounded-xl border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Barang</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Stok</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Harga Jual</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        @forelse($searchedProducts as $p)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $p->sku }} - {{ $p->name }}</td>
+                                <td class="px-4 py-3 text-sm text-center text-gray-500">
+                                    <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 {{ $p->current_stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                        {{ $p->current_stock }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-right font-bold text-gray-900">Rp {{ number_format($p->selling_price, 0, ',', '.') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">Barang tidak ditemukan.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 
     {{-- Table Rows --}}
@@ -165,7 +212,8 @@
             </div>
         </div>
     </div>
-
+    
+    @if(Auth::user()->hasRole('admin'))
     {{-- Charts Row 1 --}}
     <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Chart 1: Transaction Trend --}}
@@ -480,4 +528,5 @@
 
         });
     </script>
+    @endif
 </div>
