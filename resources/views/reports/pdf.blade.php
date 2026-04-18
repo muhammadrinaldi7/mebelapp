@@ -227,6 +227,33 @@
                 @endif
             </tbody>
         </table>
+    @elseif($tab === 'expenses')
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Kategori / Judul</th>
+                    <th>Catatan</th>
+                    <th class="text-right">Nominal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php $totalExp = 0; @endphp
+                @foreach($expenses as $item)
+                @php $totalExp += $item->amount; @endphp
+                <tr>
+                    <td>{{ $item->expense_date->format('d/m/Y') }}</td>
+                    <td class="font-bold">{{ $item->category }}</td>
+                    <td>{{ $item->notes ?: '-' }}</td>
+                    <td class="text-right font-bold">Rp {{ number_format($item->amount, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+                <tr>
+                    <td colspan="3" class="text-right font-bold">TOTAL PENGELUARAN</td>
+                    <td class="text-right font-bold" style="color: #ef4444;">Rp {{ number_format($totalExp, 0, ',', '.') }}</td>
+                </tr>
+            </tbody>
+        </table>
     @endif
 
     <div class="footer">

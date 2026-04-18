@@ -120,6 +120,18 @@ class ReportController extends Controller
                 }
             }
         }
+        elseif ($tab === 'expenses') {
+            $data['expenses'] = \App\Models\Expense::with('user')
+                ->when($from, fn($q) => $q->whereDate('expense_date', '>=', $from))
+                ->when($to, fn($q) => $q->whereDate('expense_date', '<=', $to))
+                ->when($search, function($q) use ($search) {
+                    $q->where('category', 'like', '%' . $search . '%')
+                      ->orWhere('notes', 'like', '%' . $search . '%');
+                })
+                ->latest('expense_date')
+                ->get();
+            $data['reportTitle'] = 'Laporan Pengeluaran Operasional';
+        }
 
         $filename = 'laporan_' . $tab . '_' . date('Ymd_His');
 

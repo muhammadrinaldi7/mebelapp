@@ -74,12 +74,13 @@
                     Laporan Keuntungan
                 </button>
             @endcan
-            @if(Auth::user()->hasRole('admin'))
+            @if (Auth::user()->hasRole('admin'))
                 <button wire:click="setTab('buy_price')"
                     class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors {{ $activeTab === 'buy_price' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
-                    <svg class="-ml-0.5 mr-2 h-5 w-5 inline-block {{ $activeTab === 'buy_price' ? 'text-indigo-500' : 'text-gray-400' }}" 
+                    <svg class="-ml-0.5 mr-2 h-5 w-5 inline-block {{ $activeTab === 'buy_price' ? 'text-indigo-500' : 'text-gray-400' }}"
                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
                     </svg>
                     Analisa Harga Beli
                 </button>
@@ -148,15 +149,17 @@
                     </select>
                 </div>
             @endif
-            @if($activeTab === 'buy_price')
+            @if ($activeTab === 'buy_price')
                 <div class="col-span-1 sm:col-span-2">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Pilih Produk (Analisa)</label>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Pilih Produk
+                        (Analisa)</label>
                     <div class="relative">
                         <select wire:model.live="compareProductId"
                             class="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 appearance-none">
                             <option value="">-- Pilih Produk untuk Dianalisa --</option>
                             @foreach ($productsFilter as $prodFilter)
-                                <option value="{{ $prodFilter->id }}">{{ $prodFilter->sku }} - {{ $prodFilter->name }}</option>
+                                <option value="{{ $prodFilter->id }}">{{ $prodFilter->sku }} -
+                                    {{ $prodFilter->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -183,7 +186,7 @@
                     <p class="mt-1 text-xl font-bold text-gray-900">{{ $summary['totalTransactions'] }}</p>
                 </div>
                 <div class="rounded-2xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200 text-center">
-                    <p class="text-xs font-medium text-emerald-600">Barang Masuk / Retur</p>
+                    <p class="text-xs font-medium text-emerald-600">Barang Masuk</p>
                     <p class="mt-1 text-xl font-bold text-emerald-700">{{ $summary['totalIn'] }}</p>
                 </div>
                 <div class="rounded-2xl bg-orange-50 p-4 shadow-sm ring-1 ring-orange-200 text-center">
@@ -281,7 +284,7 @@
                 <div class="p-4">{{ $profitDetails->links() }}</div>
             @elseif($activeTab === 'buy_price')
                 <div class="p-6">
-                    @if($compareProductId && count($priceHistory) > 0)
+                    @if ($compareProductId && count($priceHistory) > 0)
                         {{-- Chart powered by Alpine.js + Chart.js --}}
                         <div wire:key="chart-{{ $compareProductId }}-{{ $dateFrom }}-{{ $dateTo }}"
                             class="mb-8 p-5 rounded-2xl shadow-sm border border-gray-100 bg-white"
@@ -295,15 +298,15 @@
                                 renderChart() {
                                     const ctx = this.$refs.canvas;
                                     if (!ctx || typeof Chart === 'undefined') return;
-
+                            
                                     if (this.chart) {
                                         this.chart.destroy();
                                     }
-
+                            
                                     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
                                     gradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
                                     gradient.addColorStop(1, 'rgba(239, 68, 68, 0.01)');
-
+                            
                                     this.chart = new Chart(ctx, {
                                         type: 'line',
                                         data: {
@@ -367,10 +370,13 @@
                                         }
                                     });
                                 }
-                            }"
-                        >
+                            }">
                             <h3 class="text-sm font-bold text-gray-900 mb-3">
-                                <svg class="inline-block w-4 h-4 mr-1 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
+                                <svg class="inline-block w-4 h-4 mr-1 text-red-500" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                                </svg>
                                 Grafik Pergerakan Harga Beli (Rp)
                             </h3>
                             <div class="relative w-full" style="height: 300px;" wire:ignore>
@@ -390,20 +396,28 @@
                         @endphp
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                             <div class="rounded-xl bg-red-50 p-3 ring-1 ring-red-100 text-center">
-                                <p class="text-[10px] font-semibold text-red-500 uppercase tracking-wider">Harga Tertinggi</p>
-                                <p class="mt-1 text-base font-bold text-red-700">Rp {{ number_format($maxPrice, 0, ',', '.') }}</p>
+                                <p class="text-[10px] font-semibold text-red-500 uppercase tracking-wider">Harga
+                                    Tertinggi</p>
+                                <p class="mt-1 text-base font-bold text-red-700">Rp
+                                    {{ number_format($maxPrice, 0, ',', '.') }}</p>
                             </div>
                             <div class="rounded-xl bg-emerald-50 p-3 ring-1 ring-emerald-100 text-center">
-                                <p class="text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">Harga Terendah</p>
-                                <p class="mt-1 text-base font-bold text-emerald-700">Rp {{ number_format($minPrice, 0, ',', '.') }}</p>
+                                <p class="text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">Harga
+                                    Terendah</p>
+                                <p class="mt-1 text-base font-bold text-emerald-700">Rp
+                                    {{ number_format($minPrice, 0, ',', '.') }}</p>
                             </div>
                             <div class="rounded-xl bg-blue-50 p-3 ring-1 ring-blue-100 text-center">
-                                <p class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Rata-Rata</p>
-                                <p class="mt-1 text-base font-bold text-blue-700">Rp {{ number_format($avgPrice, 0, ',', '.') }}</p>
+                                <p class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Rata-Rata
+                                </p>
+                                <p class="mt-1 text-base font-bold text-blue-700">Rp
+                                    {{ number_format($avgPrice, 0, ',', '.') }}</p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3 ring-1 ring-gray-200 text-center">
-                                <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Perubahan</p>
-                                <p class="mt-1 text-base font-bold {{ $priceDiff > 0 ? 'text-red-600' : ($priceDiff < 0 ? 'text-emerald-600' : 'text-gray-600') }}">
+                                <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Perubahan
+                                </p>
+                                <p
+                                    class="mt-1 text-base font-bold {{ $priceDiff > 0 ? 'text-red-600' : ($priceDiff < 0 ? 'text-emerald-600' : 'text-gray-600') }}">
                                     {{ $priceDiff > 0 ? '▲' : ($priceDiff < 0 ? '▼' : '—') }} {{ abs($pricePct) }}%
                                 </p>
                             </div>
@@ -413,21 +427,38 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal Masuk</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Referensi</th>
-                                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Kuantitas</th>
-                                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Harga Beli / Unit</th>
-                                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Nilai</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            Tanggal Masuk</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            Referensi</th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            Kuantitas</th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            Harga Beli / Unit</th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            Total Nilai</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    @foreach($priceHistory as $hist)
+                                    @foreach ($priceHistory as $hist)
                                         <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-3 text-sm text-gray-500">{{ \Carbon\Carbon::parse($hist->transaction->transaction_date)->format('d M Y') }}</td>
-                                            <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ $hist->transaction->reference_code }}</td>
-                                            <td class="px-4 py-3 text-sm text-center text-gray-500 font-bold">{{ $hist->quantity }}</td>
-                                            <td class="px-4 py-3 text-sm text-right text-red-600 font-bold">Rp {{ number_format($hist->price_at_transaction, 0, ',', '.') }}</td>
-                                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">Rp {{ number_format($hist->price_at_transaction * $hist->quantity, 0, ',', '.') }}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-500">
+                                                {{ \Carbon\Carbon::parse($hist->transaction->transaction_date)->format('d M Y') }}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-900 font-medium">
+                                                {{ $hist->transaction->reference_code }}</td>
+                                            <td class="px-4 py-3 text-sm text-center text-gray-500 font-bold">
+                                                {{ $hist->quantity }}</td>
+                                            <td class="px-4 py-3 text-sm text-right text-red-600 font-bold">Rp
+                                                {{ number_format($hist->price_at_transaction, 0, ',', '.') }}</td>
+                                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">Rp
+                                                {{ number_format($hist->price_at_transaction * $hist->quantity, 0, ',', '.') }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -439,9 +470,14 @@
                         </div>
                     @else
                         <div class="py-16 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Pilih Produk</h3>
-                            <p class="mt-1 text-sm text-gray-500">Silakan pilih produk dari dropdown di atas untuk melihat analisa tren harga belinya.</p>
+                            <p class="mt-1 text-sm text-gray-500">Silakan pilih produk dari dropdown di atas untuk
+                                melihat analisa tren harga belinya.</p>
                         </div>
                     @endif
                 </div>

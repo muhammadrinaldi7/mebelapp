@@ -204,6 +204,36 @@
                 @endif
             </tbody>
         </table>
+    @elseif($tab === 'expenses')
+        <table>
+            <thead>
+                <tr><th colspan="4" style="text-align: center; font-size: 16px; font-weight: bold;">{{ $reportTitle ?? 'Laporan Pengeluaran Operasional' }}</th></tr>
+                <tr><th colspan="4" style="text-align: center;">Periode: {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : 'Awal' }} - {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y') : 'Akhir' }}</th></tr>
+                <tr><th colspan="4"></th></tr>
+                <tr>
+                    <th style="font-weight: bold; text-align: left;">Tanggal</th>
+                    <th style="font-weight: bold; text-align: left;">Kategori / Judul</th>
+                    <th style="font-weight: bold; text-align: left;">Catatan</th>
+                    <th style="font-weight: bold; text-align: right;">Nominal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php $totalExp = 0; @endphp
+                @foreach($expenses as $item)
+                @php $totalExp += $item->amount; @endphp
+                <tr>
+                    <td>{{ $item->expense_date->format('d/m/Y') }}</td>
+                    <td style="font-weight: bold;">{{ $item->category }}</td>
+                    <td>{{ $item->notes ?: '-' }}</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $item->amount }}</td>
+                </tr>
+                @endforeach
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL PENGELUARAN</td>
+                    <td style="text-align: right; font-weight: bold; color: #ef4444;">{{ $totalExp }}</td>
+                </tr>
+            </tbody>
+        </table>
     @endif
 </body>
 </html>
