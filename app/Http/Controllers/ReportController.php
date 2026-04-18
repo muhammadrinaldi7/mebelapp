@@ -98,6 +98,40 @@ class ReportController extends Controller
                 ->get();
             $data['reportTitle'] = 'Keuntungan Kotor Penjualan';
         }
+        elseif ($tab === 'buy_price') {
+            $pid = $request->get('pid');
+            $data['priceHistory'] = collect();
+            $data['reportTitle'] = 'Analisa Harga Beli';
+
+            if ($pid) {
+                $history = TransactionDetail::with('transaction', 'product')
+                    ->where('product_id', $pid)
+                    ->whereHas('transaction', fn($q) => $q->where('type', 'in')
+                        ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
+                        ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to))
+                    )
+                    ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
+                    ->orderBy('transactions.transaction_date', 'asc')
+                    ->select('transaction_details.*')
+                    ->get();
+                $data['priceHistory'] = $history;
+                if ($history->count() > 0) {
+                    $data['reportTitle'] = 'Analisa Harga Beli Produk: ' . $history->first()->product->name;
+                }
+            }
+        }
+        elseif ($tab === 'expenses') {
+            $data['expenses'] = \App\Models\Expense::with('user')
+                ->when($from, fn($q) => $q->whereDate('expense_date', '>=', $from))
+                ->when($to, fn($q) => $q->whereDate('expense_date', '<=', $to))
+                ->when($search, function($q) use ($search) {
+                    $q->where('category', 'like', '%' . $search . '%')
+                      ->orWhere('notes', 'like', '%' . $search . '%');
+                })
+                ->latest('expense_date')
+                ->get();
+            $data['reportTitle'] = 'Laporan Pengeluaran Operasional';
+        }
 
         $filename = 'laporan_' . $tab . '_' . date('Ymd_His');
 

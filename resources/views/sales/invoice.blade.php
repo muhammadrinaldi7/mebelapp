@@ -216,7 +216,7 @@
         <div class="header">
             <div class="company-info">
                 <h1>{{ config('app.name', 'Mebel Stock') }}</h1>
-                <p>Pusat Grosir & Retail Furniture</p>
+                <p>Retail Furniture</p>
                 <p>Dicetak oleh: {{ Auth::user()->name }}</p>
             </div>
             <div class="doc-title">
@@ -257,8 +257,8 @@
             <thead>
                 <tr>
                     <th width="5%">No</th>
-                    <th width="15%">Kode/SKU</th>
-                    <th width="40%">Nama Mebel</th>
+                    <th width="15%">Kode Item/SKU</th>
+                    <th width="40%">Nama Item</th>
                     <th width="10%" class="text-center">Qty</th>
                     <th width="15%" class="text-right">Harga Satuan</th>
                     <th width="15%" class="text-right">Total</th>

@@ -11,6 +11,7 @@ use App\Livewire\Report;
 use App\Livewire\UserManagement;
 use App\Livewire\RoleManagement;
 use App\Http\Controllers\ReportController;
+use App\Livewire\ExpenseIndex;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -35,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/users', UserManagement::class)->name('users.index');
         Route::get('/roles', RoleManagement::class)->name('roles.index');
+        Route::get('/expenses', ExpenseIndex::class)->name('expenses.index');
     });
 });
 

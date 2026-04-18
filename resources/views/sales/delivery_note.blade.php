@@ -104,7 +104,8 @@
         th,
         td {
             border: 1px dashed #000;
-            padding: 8px 4px; /* Slightly taller rows for checking */
+            padding: 8px 4px;
+            /* Slightly taller rows for checking */
             text-align: left;
         }
 
@@ -134,7 +135,8 @@
 
         .sig-box p {
             font-weight: bold;
-            margin: 0 0 50px 0; /* More space for actual signing */
+            margin: 0 0 50px 0;
+            /* More space for actual signing */
         }
 
         .sig-box .line {
@@ -168,7 +170,7 @@
         <div class="header">
             <div class="company-info">
                 <h1>{{ config('app.name', 'Mebel Stock') }}</h1>
-                <p>Pusat Grosir & Retail Furniture</p>
+                <p>Retail Furniture</p>
                 <p>Admin Gudang: {{ Auth::user()->name }}</p>
             </div>
             <div class="doc-title">
@@ -189,7 +191,7 @@
             <div class="invoice-info">
                 <p><strong>Tanggal Keluar:</strong> {{ \Carbon\Carbon::now()->format('d/m/Y') }}</p>
                 <p><strong>Armada Pengiriman:</strong>
-                    {{ str_replace('_', ' ', Str::title($transaction->shipping_status)) }} 
+                    {{ str_replace('_', ' ', Str::title($transaction->shipping_status)) }}
                 </p>
                 @if ($transaction->driver_name)
                     <p><strong>Nama Supir:</strong> {{ $transaction->driver_name }}</p>
@@ -204,8 +206,8 @@
             <thead>
                 <tr>
                     <th width="5%" class="text-center">No</th>
-                    <th width="15%">Kode/SKU</th>
-                    <th width="60%">Nama Mebel & Spesifikasi</th>
+                    <th width="15%">Kode Item/SKU</th>
+                    <th width="60%">Nama Item</th>
                     <th width="10%" class="text-center">Qty / Jumlah</th>
                     <th width="10%" class="text-center">Kondisi Cek</th>
                 </tr>
@@ -239,8 +241,10 @@
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 5px;">
-            Mohon periksa kondisi barang sebelum supir meninggalkan lokasi. Klaim garansi atau kerusakan setelah supir pergi mengikuti syarat dan ketentuan toko.<br>
+        <div
+            style="text-align: center; margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 5px;">
+            Mohon periksa kondisi barang sebelum supir meninggalkan lokasi. Klaim garansi atau kerusakan setelah supir
+            pergi mengikuti syarat dan ketentuan toko.<br>
             *** Lembar 1: Pembeli | Lembar 2: Supir | Lembar 3: Toko ***
         </div>
     </div>

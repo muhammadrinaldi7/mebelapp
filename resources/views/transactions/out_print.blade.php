@@ -168,7 +168,7 @@
         <div class="header">
             <div class="company-info">
                 <h1>{{ config('app.name', 'Mebel Stock') }}</h1>
-                <p>Pusat Grosir & Retail Furniture</p>
+                <p>Retail Furniture</p>
                 <p>Dicetak Oleh: {{ Auth::user()->name }}</p>
             </div>
             <div class="doc-title">
@@ -201,8 +201,8 @@
             <thead>
                 <tr>
                     <th width="5%" class="text-center">No</th>
-                    <th width="15%">Kode/SKU</th>
-                    <th width="60%">Nama Mebel & Spesifikasi</th>
+                    <th width="15%">Kode Item/SKU</th>
+                    <th width="60%">Nama Item</th>
                     <th width="10%" class="text-center">Qty / Jumlah</th>
                     <th width="10%" class="text-center">Kondisi Cek</th>
                 </tr>
@@ -222,7 +222,7 @@
 
         <div class="signatures">
             <div class="sig-box">
-                <p>Penerima / Supir / Tujuan,</p>
+                <p>Penerima</p>
                 <div class="line">Nama Lengkap & TTD</div>
             </div>
             <div class="sig-box">
