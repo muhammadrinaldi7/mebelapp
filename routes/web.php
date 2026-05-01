@@ -29,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sales', Sales::class)->name('sales.index');
     Route::get('/sales/{id}/invoice', [App\Http\Controllers\SalesController::class, 'invoice'])->name('sales.invoice');
     Route::get('/sales/{id}/delivery-note', [App\Http\Controllers\SalesController::class, 'deliveryNote'])->name('sales.delivery_note');
+    Route::get('/sales/{id}/print-raw', [App\Http\Controllers\SalesController::class, 'printRaw'])->name('sales.print_raw');
+    Route::get('/sales/{id}/dotmatrix-preview', [App\Http\Controllers\SalesController::class, 'dotmatrixPreview'])->name('sales.dotmatrix_preview');
     Route::get('/reports', Report::class)->name('reports.index');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('report.export');
 

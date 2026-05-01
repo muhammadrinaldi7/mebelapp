@@ -1,7 +1,7 @@
 <div>
     <div class="sm:flex sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Penjualan Terpadu</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Penjualan</h1>
             <p class="mt-1 text-sm text-gray-500">Catat Penjualan, Info Pelanggan, dan Cetak Nota.</p>
         </div>
         <button wire:click="openForm"
@@ -429,6 +429,16 @@
                                         </svg>
                                         Surat Jalan
                                     </a>
+                                    {{-- Tombol Cetak Dot Matrix (Epson LX-310 via RawBT) --}}
+                                    <button type="button" onclick="printDotMatrix({{ $trx->id }}, this)"
+                                        class="inline-flex w-full justify-center items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100 transition-colors">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V10.5" />
+                                        </svg>
+                                        <span class="print-label">Cetak LX-310</span>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -521,3 +531,95 @@
         </div>
     @endif
 </div>
+
+@script
+    <script>
+        /**
+         * Fetch base64-encoded raw ESC/P data and open via RawBT URI intent.
+         * Compatible with: RawBT Print Service (Android), NokoPrint, etc.
+         */
+        window.printDotMatrix = async function(transactionId, btnElement) {
+            const label = btnElement.querySelector('.print-label');
+            const originalText = label.textContent;
+
+            // Loading state
+            label.textContent = 'Memproses...';
+            btnElement.disabled = true;
+            btnElement.classList.add('opacity-50', 'cursor-wait');
+
+            try {
+                const response = await fetch(`/sales/${transactionId}/print-raw`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.success || !data.base64) {
+                    throw new Error('Data base64 tidak valid');
+                }
+
+                // ── Detect if Android (for URI intent) ──
+                const isAndroid = /Android/i.test(navigator.userAgent);
+
+                if (isAndroid) {
+                    // RawBT URI scheme: rawbt:base64,<base64_encoded_data>
+                    const rawbtUri = `rawbt:base64,${data.base64}`;
+
+                    // Try opening via RawBT intent
+                    window.location.href = rawbtUri;
+
+                    label.textContent = 'Mengirim ke RawBT...';
+                    setTimeout(() => {
+                        label.textContent = originalText;
+                        btnElement.disabled = false;
+                        btnElement.classList.remove('opacity-50', 'cursor-wait');
+                    }, 3000);
+                } else {
+                    // Desktop fallback: Download as .prn raw printer file
+                    const rawBytes = atob(data.base64);
+                    const bytes = new Uint8Array(rawBytes.length);
+                    for (let i = 0; i < rawBytes.length; i++) {
+                        bytes[i] = rawBytes.charCodeAt(i);
+                    }
+                    const blob = new Blob([bytes], {
+                        type: 'application/octet-stream'
+                    });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `nota-${data.reference_code}.prn`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    label.textContent = 'Terdownload!';
+                    setTimeout(() => {
+                        label.textContent = originalText;
+                        btnElement.disabled = false;
+                        btnElement.classList.remove('opacity-50', 'cursor-wait');
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Print Error:', error);
+                label.textContent = 'Gagal!';
+                btnElement.classList.remove('opacity-50');
+                btnElement.classList.add('!bg-red-100', '!text-red-700');
+
+                setTimeout(() => {
+                    label.textContent = originalText;
+                    btnElement.disabled = false;
+                    btnElement.classList.remove('cursor-wait', '!bg-red-100', '!text-red-700');
+                }, 2000);
+            }
+        };
+    </script>
+@endscript
