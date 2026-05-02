@@ -76,7 +76,7 @@ class TransactionIn extends Component
         $transaction = Transaction::with('details.product')->findOrFail($id);
         $this->edit_transaction_id = $transaction->id;
         $this->edit_items = [];
-        
+
         foreach ($transaction->details as $detail) {
             $this->edit_items[] = [
                 'id' => $detail->id,
@@ -95,6 +95,7 @@ class TransactionIn extends Component
         }
 
         $this->validate([
+            'edit_items.*.quantity' => 'integer|min:1',
             'edit_items.*.price' => 'required|numeric|min:0',
         ]);
 
@@ -104,6 +105,7 @@ class TransactionIn extends Component
                 $detail = TransactionDetail::find($item['id']);
                 if ($detail) {
                     $detail->update([
+                        'quantity' => $item['quantity'],
                         'price_at_transaction' => $item['price']
                     ]);
                     $totalAmount += ($detail->quantity * $item['price']);
@@ -113,6 +115,7 @@ class TransactionIn extends Component
             $transaction = Transaction::find($this->edit_transaction_id);
             if ($transaction) {
                 $transaction->update([
+                    'notes' => $this->notes,
                     'total_amount' => $totalAmount
                 ]);
             }
@@ -186,4 +189,3 @@ class TransactionIn extends Component
         ]);
     }
 }
-

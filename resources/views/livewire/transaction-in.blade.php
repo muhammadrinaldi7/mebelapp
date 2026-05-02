@@ -57,8 +57,9 @@
                         </div>
                         <div class="w-28 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Jumlah
                         </div>
-                        @if(Auth::user()->hasRole('admin'))
-                            <div class="w-40 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Harga
+                        @if (Auth::user()->hasRole('admin'))
+                            <div class="w-40 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">
+                                Harga
                                 Satuan</div>
                         @endif
                         <div class="w-6"></div>
@@ -91,7 +92,7 @@
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @if(Auth::user()->hasRole('admin'))
+                            @if (Auth::user()->hasRole('admin'))
                                 <div class="w-full sm:w-40">
                                     <label
                                         class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Harga
@@ -136,7 +137,7 @@
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Tanggal</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">User</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item</th>
-                    @if(Auth::user()->hasRole('admin'))
+                    @if (Auth::user()->hasRole('admin'))
                         <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Total</th>
                         <th class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Aksi</th>
                     @endif
@@ -156,10 +157,11 @@
                                 <div>{{ $detail->product->name ?? '-' }} × {{ $detail->quantity }}</div>
                             @endforeach
                         </td>
-                        @if(Auth::user()->hasRole('admin'))
+                        @can('edit-barang-masuk')
                             <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-500">
-                                @if($trx->total_amount == 0)
-                                    <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+                                @if ($trx->total_amount == 0)
+                                    <span
+                                        class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
                                         ⚠️ Belum Ada Harga
                                     </span>
                                 @else
@@ -170,16 +172,19 @@
                                 <button type="button" wire:click="openEditForm({{ $trx->id }})"
                                     class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-100">
                                     <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                        <path
+                                            d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                     </svg>
-                                    Set Harga
+                                    Edit
                                 </button>
                             </td>
-                        @endif
+                        @endcan
+
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ Auth::user()->hasRole('admin') ? '6' : '4' }}" class="py-4 text-center text-sm text-gray-500">Belum ada transaksi barang
+                        <td colspan="{{ Auth::user()->hasRole('admin') ? '6' : '4' }}"
+                            class="py-4 text-center text-sm text-gray-500">Belum ada transaksi barang
                             masuk.</td>
                     </tr>
                 @endforelse
@@ -194,22 +199,40 @@
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                    <div
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                         <form wire:submit="updatePrices">
                             <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                                 <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900 border-b pb-2">Set Harga Beli Barang Masuk</h3>
-                                    
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900 border-b pb-2">Edit
+                                        Barang Masuk</h3>
+
                                     <div class="mt-4 space-y-4">
-                                        @foreach($edit_items as $index => $item)
-                                            <div class="bg-gray-50 p-3 rounded-lg flex flex-col gap-2 border border-gray-100">
+                                        @foreach ($edit_items as $index => $item)
+                                            <div
+                                                class="bg-gray-50 p-3 rounded-lg flex flex-col gap-2 border border-gray-100">
                                                 <div class="flex justify-between">
-                                                    <span class="text-sm font-semibold text-gray-800">{{ $item['product_name'] }}</span>
-                                                    <span class="text-xs text-gray-500">Qty: {{ $item['quantity'] }}</span>
+                                                    <span
+                                                        class="text-sm font-semibold text-gray-800">{{ $item['product_name'] }}</span>
+                                                    <span class="text-xs text-gray-500">Qty:
+                                                        {{ $item['quantity'] }}</span>
                                                 </div>
                                                 <div>
-                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Harga Satuan (Beli)</label>
-                                                    <input wire:model="edit_items.{{ $index }}.price" type="number" min="0" required
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Quantity</label>
+                                                    <input wire:model="edit_items.{{ $index }}.quantity"
+                                                        type="number"
+                                                        class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+                                                    @error("edit_items.{$index}.quantity")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Harga
+                                                        Satuan (Beli)</label>
+                                                    <input wire:model="edit_items.{{ $index }}.price"
+                                                        type="number" min="0" required
                                                         class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
                                                     @error("edit_items.{$index}.price")
                                                         <span class="text-red-500 text-xs">{{ $message }}</span>
@@ -221,8 +244,11 @@
                                 </div>
                             </div>
                             <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                <button type="submit" class="inline-flex w-full justify-center rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">Simpan Harga</button>
-                                <button type="button" wire:click="$set('showEditForm', false)" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
+                                <button type="submit"
+                                    class="inline-flex w-full justify-center rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">Simpan
+                                </button>
+                                <button type="button" wire:click="$set('showEditForm', false)"
+                                    class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
                             </div>
                         </form>
                     </div>
