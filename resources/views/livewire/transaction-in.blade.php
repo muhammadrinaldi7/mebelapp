@@ -70,14 +70,69 @@
                                 <label
                                     class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nama
                                     Produk</label>
-                                <select wire:model="items.{{ $index }}.product_id"
-                                    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
-                                    <option value="">Pilih Produk</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product->id }}">{{ $product->sku }} - {{ $product->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <div x-data="{
+                                    open: false,
+                                    search: '',
+                                    selectedLabel: '',
+                                    init() {
+                                        const pid = @js($item['product_id']);
+                                        if (pid) {
+                                            const found = @js($products->map(fn($p) => ['id' => $p->id, 'label' => $p->sku . ' - ' . $p->name])->toArray()).find(p => p.id == pid);
+                                            if (found) this.selectedLabel = found.label;
+                                        }
+                                    },
+                                    get filtered() {
+                                        if (!this.search) return @js($products->map(fn($p) => ['id' => $p->id, 'label' => $p->sku . ' - ' . $p->name])->toArray());
+                                        const s = this.search.toLowerCase();
+                                        return @js($products->map(fn($p) => ['id' => $p->id, 'label' => $p->sku . ' - ' . $p->name])->toArray()).filter(p => p.label.toLowerCase().includes(s));
+                                    },
+                                    select(product) {
+                                        this.selectedLabel = product.label;
+                                        this.search = '';
+                                        this.open = false;
+                                        $wire.set('items.{{ $index }}.product_id', product.id);
+                                    },
+                                    clear() {
+                                        this.selectedLabel = '';
+                                        this.search = '';
+                                        $wire.set('items.{{ $index }}.product_id', '');
+                                    }
+                                }" @click.outside="open = false" class="relative">
+                                    <div class="relative">
+                                        <input type="text"
+                                            x-show="open || !selectedLabel"
+                                            x-ref="searchInput"
+                                            x-model="search"
+                                            @focus="open = true"
+                                            @click="open = true"
+                                            placeholder="Cari produk..."
+                                            class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm" />
+                                        <button type="button"
+                                            x-show="!open && selectedLabel"
+                                            @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                                            class="block w-full rounded-md border border-gray-300 px-3 py-2 text-left text-gray-900 shadow-sm hover:bg-gray-50 sm:text-sm bg-white">
+                                            <span x-text="selectedLabel" class="truncate block"></span>
+                                        </button>
+                                        <button type="button" x-show="selectedLabel" @click="clear()"
+                                            class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div x-show="open" x-cloak
+                                        class="absolute z-50 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
+                                        <template x-for="product in filtered" :key="product.id">
+                                            <button type="button" @click="select(product)"
+                                                class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
+                                                <span x-text="product.label"></span>
+                                            </button>
+                                        </template>
+                                        <div x-show="filtered.length === 0"
+                                            class="px-3 py-2 text-sm text-gray-400 italic">Produk tidak ditemukan
+                                        </div>
+                                    </div>
+                                </div>
                                 @error("items.{$index}.product_id")
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
@@ -136,9 +191,10 @@
                     <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Kode</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Tanggal</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">User</th>
-                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Catatan</th>
+                    {{-- <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Qty</th>
-                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Satuan</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Satuan</th> --}}
                     @if (Auth::user()->hasRole('admin'))
                         <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Total</th>
                         <th class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Aksi</th>
@@ -162,6 +218,9 @@
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $trx->user->name ?? '-' }}
                         </td>
                         <td class="px-3 py-4 text-sm text-gray-500">
+                            {{ $trx->catatan ?? '-' }}
+                        </td>
+                        {{-- <td class="px-3 py-4 text-sm text-gray-500">
                             @foreach ($trx->details as $detail)
                                 <div>{{ $detail->product->name ?? '-' }}</div>
                             @endforeach
@@ -175,7 +234,7 @@
                             @foreach ($trx->details as $detail)
                                 <div>{{ $detail->product->satuan ?? '-' }}</div>
                             @endforeach
-                        </td>
+                        </td> --}}
 
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-500">
                             @if ($trx->total_amount == 0)
@@ -342,6 +401,9 @@
                                         <tr>
                                             <th
                                                 class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Kode</th>
+                                            <th
+                                                class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                                 Produk</th>
                                             <th
                                                 class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -360,6 +422,8 @@
                                     <tbody class="divide-y divide-gray-200 bg-white">
                                         @foreach ($detail_transaction['details'] as $detail)
                                             <tr>
+                                                <td class="px-4 py-2.5 text-sm text-gray-900">
+                                                    {{ $detail['sku'] }}</td>
                                                 <td class="px-4 py-2.5 text-sm text-gray-900">
                                                     {{ $detail['product_name'] }}</td>
                                                 <td class="px-4 py-2.5 text-sm text-gray-700 text-center">

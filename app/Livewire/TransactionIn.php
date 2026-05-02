@@ -76,6 +76,7 @@ class TransactionIn extends Component
             'notes' => $trx->notes ?: '-',
             'total_amount' => $trx->total_amount,
             'details' => $trx->details->map(fn($d) => [
+                'sku' => $d->product->sku ?? '-',
                 'product_name' => $d->product->name ?? '-',
                 'quantity' => $d->quantity,
                 'satuan' => $d->product->satuan ?? '-',
