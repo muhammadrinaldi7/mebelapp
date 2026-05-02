@@ -26,6 +26,10 @@ class TransactionOut extends Component
 
     public $search = '';
 
+    // Delete State
+    public $showDeleteConfirm = false;
+    public $delete_transaction_id = null;
+
     protected $rules = [
         'reference_code' => 'required|string|max:255',
         'transaction_date' => 'required|date',
@@ -106,6 +110,33 @@ class TransactionOut extends Component
 
         $this->showForm = false;
         $this->dispatch('notify', type: 'success', message: 'Transaksi barang keluar berhasil disimpan.');
+    }
+
+    public function confirmDelete($id)
+    {
+        $this->delete_transaction_id = $id;
+        $this->showDeleteConfirm = true;
+    }
+
+    public function deleteTransaction()
+    {
+        if (!Auth::user()->can('hapus-barang-keluar')) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $transaction = Transaction::with('details')->findOrFail($this->delete_transaction_id);
+
+        DB::transaction(function () use ($transaction) {
+            // Delete details first — observer will reverse stock automatically
+            foreach ($transaction->details as $detail) {
+                $detail->delete();
+            }
+            $transaction->delete();
+        });
+
+        $this->showDeleteConfirm = false;
+        $this->delete_transaction_id = null;
+        $this->dispatch('notify', type: 'success', message: 'Transaksi barang keluar berhasil dihapus dan stok telah dikembalikan.');
     }
 
     public function render()
