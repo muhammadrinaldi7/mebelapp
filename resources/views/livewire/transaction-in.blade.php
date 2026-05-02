@@ -154,7 +154,9 @@
                 @forelse($transactions as $trx)
                     <tr>
                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
-                            {{ $trx->reference_code }}</td>
+                            <button type="button" wire:click="showDetail({{ $trx->id }})"
+                                class="text-indigo-600 hover:text-indigo-900 hover:underline cursor-pointer">{{ $trx->reference_code }}</button>
+                        </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             {{ $trx->transaction_date->format('d M Y') }}</td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $trx->user->name ?? '-' }}
@@ -280,6 +282,117 @@
                                     class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Detail Transaction Modal --}}
+    @if ($showDetailModal && $detail_transaction)
+        <div class="relative z-50">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6">
+                            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Detail Transaksi Barang Masuk
+                                </h3>
+                                <button type="button" wire:click="$set('showDetailModal', false)"
+                                    class="text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path
+                                            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-5">
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kode
+                                        Referensi</p>
+                                    <p class="mt-1 text-sm font-medium text-gray-900">
+                                        {{ $detail_transaction['reference_code'] }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                        Tanggal</p>
+                                    <p class="mt-1 text-sm font-medium text-gray-900">
+                                        {{ $detail_transaction['transaction_date'] }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                        Dibuat Oleh</p>
+                                    <p class="mt-1 text-sm font-medium text-gray-900">
+                                        {{ $detail_transaction['user_name'] }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                        Catatan</p>
+                                    <p class="mt-1 text-sm font-medium text-gray-900">
+                                        {{ $detail_transaction['notes'] }}</p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-hidden rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th
+                                                class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Produk</th>
+                                            <th
+                                                class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Qty</th>
+                                            <th
+                                                class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Satuan</th>
+                                            <th
+                                                class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Harga Satuan</th>
+                                            <th
+                                                class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                        @foreach ($detail_transaction['details'] as $detail)
+                                            <tr>
+                                                <td class="px-4 py-2.5 text-sm text-gray-900">
+                                                    {{ $detail['product_name'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-700 text-center">
+                                                    {{ $detail['quantity'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-700 text-center">
+                                                    {{ $detail['satuan'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-700 text-right">
+                                                    Rp {{ number_format($detail['price'], 0, ',', '.') }}
+                                                </td>
+                                                <td class="px-4 py-2.5 text-sm font-medium text-gray-900 text-right">
+                                                    Rp {{ number_format($detail['subtotal'], 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="bg-gray-50">
+                                        <tr>
+                                            <td colspan="4"
+                                                class="px-4 py-2.5 text-sm font-semibold text-gray-900 text-right">
+                                                Total</td>
+                                            <td class="px-4 py-2.5 text-sm font-bold text-gray-900 text-right">
+                                                Rp
+                                                {{ number_format($detail_transaction['total_amount'], 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="button" wire:click="$set('showDetailModal', false)"
+                                class="inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto">Tutup</button>
+                        </div>
                     </div>
                 </div>
             </div>
