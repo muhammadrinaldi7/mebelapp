@@ -38,7 +38,12 @@ class PermissionSeeder extends Seeder
             'lihat-laporan-filter',
             'export-laporan',
             'lihat-laporan',
-            'kelola-pengeluaran'
+            'kelola-pengeluaran',
+
+            // Transaksi
+            'edit-barang-masuk',
+            'hapus-barang-masuk',
+            'hapus-barang-keluar',
         ];
 
         // Looping dan simpan ke database
