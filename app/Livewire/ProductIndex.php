@@ -30,6 +30,7 @@ class ProductIndex extends Component
     public $brand_id = '';
     public $base_price = 0;
     public $selling_price = 0;
+    public $satuan = '';
 
     public $confirmingDelete = false;
     public $deleteId;
@@ -43,6 +44,7 @@ class ProductIndex extends Component
             'brand_id' => 'required|exists:brands,id',
             'base_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
+            'satuan' => 'required|string|max:255',
         ];
     }
 
@@ -61,7 +63,7 @@ class ProductIndex extends Component
 
     public function create()
     {
-        $this->reset(['productId', 'sku', 'name', 'category_id', 'brand_id', 'base_price', 'selling_price', 'editMode']);
+        $this->reset(['productId', 'sku', 'name', 'category_id', 'brand_id', 'base_price', 'selling_price', 'editMode', 'satuan']);
         $this->showModal = true;
     }
 
@@ -75,6 +77,7 @@ class ProductIndex extends Component
         $this->brand_id = $product->brand_id;
         $this->base_price = $product->base_price;
         $this->selling_price = $product->selling_price;
+        $this->satuan = $product->satuan;
         $this->editMode = true;
         $this->showModal = true;
     }
@@ -90,6 +93,7 @@ class ProductIndex extends Component
             'brand_id' => $this->brand_id,
             'base_price' => $this->base_price,
             'selling_price' => $this->selling_price,
+            'satuan' => $this->satuan,
         ];
 
         if ($this->editMode) {
@@ -138,4 +142,3 @@ class ProductIndex extends Component
         ]);
     }
 }
-

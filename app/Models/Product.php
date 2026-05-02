@@ -19,6 +19,7 @@ class Product extends Model
         'base_price',
         'selling_price',
         'current_stock',
+        'satuan',
     ];
 
     protected $casts = [
