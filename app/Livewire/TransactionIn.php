@@ -32,6 +32,10 @@ class TransactionIn extends Component
     public $showDeleteConfirm = false;
     public $delete_transaction_id = null;
 
+    // Detail State
+    public $showDetailModal = false;
+    public $detail_transaction = null;
+
     public $search = '';
 
     protected function rules()
@@ -60,6 +64,26 @@ class TransactionIn extends Component
     public function updatingSearch()
     {
         $this->resetPage();
+    }
+
+    public function showDetail($id)
+    {
+        $trx = Transaction::with('user', 'details.product')->findOrFail($id);
+        $this->detail_transaction = [
+            'reference_code' => $trx->reference_code,
+            'transaction_date' => $trx->transaction_date->format('d M Y'),
+            'user_name' => $trx->user->name ?? '-',
+            'notes' => $trx->notes ?: '-',
+            'total_amount' => $trx->total_amount,
+            'details' => $trx->details->map(fn($d) => [
+                'product_name' => $d->product->name ?? '-',
+                'quantity' => $d->quantity,
+                'satuan' => $d->product->satuan ?? '-',
+                'price' => $d->price_at_transaction,
+                'subtotal' => $d->quantity * $d->price_at_transaction,
+            ])->toArray(),
+        ];
+        $this->showDetailModal = true;
     }
 
     public function openForm()
