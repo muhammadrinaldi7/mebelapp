@@ -107,8 +107,20 @@
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">SKU</label>
-                            <input wire:model="sku" type="text"
-                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+                            <input wire:model.live.debounce.400ms="sku" type="text"
+                                class="mt-1 block w-full rounded-md border {{ $skuExists ? 'border-red-400 ring-2 ring-red-200' : 'border-gray-300' }} px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                                placeholder="Masukkan kode SKU">
+                            @if ($skuExists)
+                                <div class="mt-1.5 flex items-start gap-1.5 rounded-md bg-red-50 px-2.5 py-2 ring-1 ring-inset ring-red-200">
+                                    <svg class="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-xs font-semibold text-red-700">SKU sudah digunakan!</p>
+                                        <p class="text-xs text-red-600">{{ $skuExistingProduct }}</p>
+                                    </div>
+                                </div>
+                            @endif
                             @error('sku')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -123,13 +135,65 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Merek</label>
-                            <select wire:model="brand_id"
-                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
-                                <option value="">Pilih Merek</option>
-                                @foreach ($brands as $brand)
-                                    <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                                @endforeach
-                            </select>
+                            <div x-data="{
+                                open: false,
+                                search: '',
+                                selectedLabel: '',
+                                init() {
+                                    const bid = @js($brand_id);
+                                    if (bid) {
+                                        const found = @js($brands->map(fn($b) => ['id' => $b->id, 'label' => $b->name])->toArray()).find(b => b.id == bid);
+                                        if (found) this.selectedLabel = found.label;
+                                    }
+                                },
+                                get filtered() {
+                                    const items = @js($brands->map(fn($b) => ['id' => $b->id, 'label' => $b->name])->toArray());
+                                    if (!this.search) return items;
+                                    const s = this.search.toLowerCase();
+                                    return items.filter(b => b.label.toLowerCase().includes(s));
+                                },
+                                select(brand) {
+                                    this.selectedLabel = brand.label;
+                                    this.search = '';
+                                    this.open = false;
+                                    $wire.set('brand_id', brand.id);
+                                },
+                                clear() {
+                                    this.selectedLabel = '';
+                                    this.search = '';
+                                    $wire.set('brand_id', '');
+                                }
+                            }" @click.outside="open = false" class="relative mt-1">
+                                <div class="relative">
+                                    <input type="text" x-show="open || !selectedLabel" x-ref="searchInput"
+                                        x-model="search" @focus="open = true" @click="open = true"
+                                        placeholder="Cari merek..."
+                                        class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm" />
+                                    <button type="button" x-show="!open && selectedLabel"
+                                        @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                                        class="block w-full rounded-md border border-gray-300 px-3 py-2 text-left text-gray-900 shadow-sm hover:bg-gray-50 sm:text-sm bg-white">
+                                        <span x-text="selectedLabel" class="truncate block"></span>
+                                    </button>
+                                    <button type="button" x-show="selectedLabel" @click="clear()"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div x-show="open" x-cloak
+                                    class="absolute z-50 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
+                                    <template x-for="brand in filtered" :key="brand.id">
+                                        <button type="button" @click="select(brand)"
+                                            class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
+                                            <span x-text="brand.label"></span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filtered.length === 0"
+                                        class="px-3 py-2 text-sm text-gray-400 italic">Merek tidak ditemukan
+                                    </div>
+                                </div>
+                            </div>
                             @error('brand_id')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -179,8 +243,8 @@
                     <div class="flex justify-end space-x-3">
                         <button type="button" wire:click="$set('showModal', false)"
                             class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Batal</button>
-                        <button type="submit"
-                            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Simpan</button>
+                        <button type="submit" {{ $skuExists ? 'disabled' : '' }}
+                            class="rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm {{ $skuExists ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500' }}">Simpan</button>
                     </div>
                 </form>
             </div>
