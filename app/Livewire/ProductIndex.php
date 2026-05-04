@@ -35,6 +35,10 @@ class ProductIndex extends Component
     public $confirmingDelete = false;
     public $deleteId;
 
+    // SKU validation state
+    public $skuExists = false;
+    public $skuExistingProduct = null;
+
     protected function rules()
     {
         return [
@@ -61,9 +65,33 @@ class ProductIndex extends Component
         $this->resetPage();
     }
 
+    public function updatedSku($value)
+    {
+        $this->skuExists = false;
+        $this->skuExistingProduct = null;
+
+        if (strlen($value) < 2) {
+            return;
+        }
+
+        $query = Product::where('sku', $value);
+
+        // Exclude current product when editing
+        if ($this->editMode && $this->productId) {
+            $query->where('id', '!=', $this->productId);
+        }
+
+        $existing = $query->first();
+
+        if ($existing) {
+            $this->skuExists = true;
+            $this->skuExistingProduct = $existing->sku . ' - ' . $existing->name;
+        }
+    }
+
     public function create()
     {
-        $this->reset(['productId', 'sku', 'name', 'category_id', 'brand_id', 'base_price', 'selling_price', 'editMode', 'satuan']);
+        $this->reset(['productId', 'sku', 'name', 'category_id', 'brand_id', 'base_price', 'selling_price', 'editMode', 'satuan', 'skuExists', 'skuExistingProduct']);
         $this->showModal = true;
     }
 
