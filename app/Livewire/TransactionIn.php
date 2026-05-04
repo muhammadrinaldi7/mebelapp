@@ -26,6 +26,9 @@ class TransactionIn extends Component
     // Edit State
     public $showEditForm = false;
     public $edit_transaction_id = null;
+    public $edit_reference_code = '';
+    public $edit_transaction_date = '';
+    public $edit_notes = '';
     public $edit_items = [];
 
     // Delete State
@@ -103,13 +106,19 @@ class TransactionIn extends Component
         }
 
         $transaction = Transaction::with('details.product')->findOrFail($id);
+
         $this->edit_transaction_id = $transaction->id;
+        $this->edit_reference_code = $transaction->reference_code;
+        $this->edit_transaction_date = $transaction->transaction_date->format('Y-m-d');
+        $this->edit_notes = $transaction->notes ?: '';
         $this->edit_items = [];
 
         foreach ($transaction->details as $detail) {
             $this->edit_items[] = [
                 'id' => $detail->id,
+                'sku' => $detail->product->sku ?? '-',
                 'product_name' => $detail->product->name ?? 'Produk Terhapus',
+                'satuan' => $detail->product->satuan ?? '-',
                 'quantity' => $detail->quantity,
                 'price' => $detail->price_at_transaction,
             ];
@@ -117,41 +126,47 @@ class TransactionIn extends Component
         $this->showEditForm = true;
     }
 
-    public function updatePrices()
+    public function updateTransaction()
     {
         if (!Auth::user()->hasRole('admin')) {
             abort(403, 'Akses ditolak.');
         }
 
         $this->validate([
-            'edit_items.*.quantity' => 'integer|min:1',
+            'edit_reference_code' => 'required|string|max:255',
+            'edit_transaction_date' => 'required|date',
+            'edit_items.*.quantity' => 'required|integer|min:1',
             'edit_items.*.price' => 'required|numeric|min:0',
         ]);
 
         DB::transaction(function () {
             $totalAmount = 0;
+
             foreach ($this->edit_items as $item) {
                 $detail = TransactionDetail::find($item['id']);
                 if ($detail) {
+                    // Observer `updating` will handle stock adjustment automatically
                     $detail->update([
                         'quantity' => $item['quantity'],
-                        'price_at_transaction' => $item['price']
+                        'price_at_transaction' => $item['price'],
                     ]);
-                    $totalAmount += ($detail->quantity * $item['price']);
+                    $totalAmount += ($item['quantity'] * $item['price']);
                 }
             }
 
             $transaction = Transaction::find($this->edit_transaction_id);
             if ($transaction) {
                 $transaction->update([
-                    'notes' => $this->notes,
-                    'total_amount' => $totalAmount
+                    'reference_code' => $this->edit_reference_code,
+                    'transaction_date' => $this->edit_transaction_date,
+                    'notes' => $this->edit_notes,
+                    'total_amount' => $totalAmount,
                 ]);
             }
         });
 
         $this->showEditForm = false;
-        $this->dispatch('notify', type: 'success', message: 'Harga barang masuk berhasil diupdate.');
+        $this->dispatch('notify', type: 'success', message: 'Transaksi barang masuk berhasil diupdate.');
     }
 
     public function confirmDelete($id)
