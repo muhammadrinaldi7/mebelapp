@@ -197,6 +197,15 @@
                                     </svg>
                                     Cetak SPB
                                 </a>
+                                @can('edit-barang-keluar')
+                                    <button type="button" wire:click="openEditForm({{ $trx->id }})"
+                                        class="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                        </svg>
+                                        Edit
+                                    </button>
+                                @endcan
                                 @can('hapus-barang-keluar')
                                     <button type="button" wire:click="confirmDelete({{ $trx->id }})"
                                         class="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-600/20 hover:bg-red-100">
@@ -296,6 +305,103 @@
                         <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                             <button type="button" wire:click="$set('showDetailModal', false)"
                                 class="inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Edit Transaction Modal --}}
+    @if ($showEditForm)
+        <div class="relative z-50">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6">
+                            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Edit Transaksi Barang Keluar
+                                </h3>
+                                <button type="button" wire:click="$set('showEditForm', false)"
+                                    class="text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path
+                                            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- Editable Header --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Kode Referensi</label>
+                                    <input type="text" wire:model="edit_reference_code"
+                                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600">
+                                    @error('edit_reference_code')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tanggal</label>
+                                    <input type="date" wire:model="edit_transaction_date"
+                                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600">
+                                    @error('edit_transaction_date')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Catatan</label>
+                                    <input type="text" wire:model="edit_notes"
+                                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600">
+                                </div>
+                            </div>
+
+                            {{-- Editable Detail Items --}}
+                            <div class="overflow-hidden rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">No</th>
+                                            <th class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Produk</th>
+                                            <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Satuan</th>
+                                            <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Stok Saat Ini</th>
+                                            <th class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">Qty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                        @foreach ($edit_items as $index => $item)
+                                            <tr>
+                                                <td class="px-4 py-2.5 text-sm text-gray-500">{{ $index + 1 }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-900">{{ $item['product_name'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-700 text-center">{{ $item['satuan'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-500 text-center">
+                                                    <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                                                        {{ $item['current_stock'] }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-1.5 text-center">
+                                                    <input type="number" min="1"
+                                                        wire:model="edit_items.{{ $index }}.quantity"
+                                                        class="w-20 rounded-md border border-gray-300 px-2 py-1.5 text-sm text-center text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600">
+                                                    @error("edit_items.{$index}.quantity")
+                                                        <span class="text-red-500 text-xs block">{{ $message }}</span>
+                                                    @enderror
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+                            <button type="button" wire:click="updateTransaction"
+                                class="inline-flex w-full justify-center rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:w-auto">
+                                Simpan Perubahan
+                            </button>
+                            <button type="button" wire:click="$set('showEditForm', false)"
+                                class="mt-3 sm:mt-0 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto">Batal</button>
                         </div>
                     </div>
                 </div>

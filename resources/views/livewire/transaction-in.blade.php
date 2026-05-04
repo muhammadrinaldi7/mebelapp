@@ -99,16 +99,11 @@
                                     }
                                 }" @click.outside="open = false" class="relative">
                                     <div class="relative">
-                                        <input type="text"
-                                            x-show="open || !selectedLabel"
-                                            x-ref="searchInput"
-                                            x-model="search"
-                                            @focus="open = true"
-                                            @click="open = true"
+                                        <input type="text" x-show="open || !selectedLabel" x-ref="searchInput"
+                                            x-model="search" @focus="open = true" @click="open = true"
                                             placeholder="Cari produk..."
                                             class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm" />
-                                        <button type="button"
-                                            x-show="!open && selectedLabel"
+                                        <button type="button" x-show="!open && selectedLabel"
                                             @click="open = true; $nextTick(() => $refs.searchInput.focus())"
                                             class="block w-full rounded-md border border-gray-300 px-3 py-2 text-left text-gray-900 shadow-sm hover:bg-gray-50 sm:text-sm bg-white">
                                             <span x-text="selectedLabel" class="truncate block"></span>
@@ -116,7 +111,8 @@
                                         <button type="button" x-show="selectedLabel" @click="clear()"
                                             class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
                                             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                                <path
+                                                    d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                                             </svg>
                                         </button>
                                     </div>
@@ -218,7 +214,7 @@
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $trx->user->name ?? '-' }}
                         </td>
                         <td class="px-3 py-4 text-sm text-gray-500">
-                            {{ $trx->catatan ?? '-' }}
+                            {{ $trx->notes ?? '-' }}
                         </td>
                         {{-- <td class="px-3 py-4 text-sm text-gray-500">
                             @foreach ($trx->details as $detail)
@@ -283,64 +279,137 @@
     </div>
     <div class="mt-4">{{ $transactions->links() }}</div>
 
-    {{-- Edit Prices Modal (Hanya Admin) --}}
+    {{-- Edit Transaction Modal (Hanya Admin) --}}
     @if ($showEditForm)
         <div class="relative z-50">
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                     <div
-                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                        <form wire:submit="updatePrices">
-                            <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900 border-b pb-2">Edit
-                                        Barang Masuk</h3>
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6">
+                            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Edit Transaksi Barang Masuk
+                                </h3>
+                                <button type="button" wire:click="$set('showEditForm', false)"
+                                    class="text-gray-400 hover:text-gray-600">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path
+                                            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                    </svg>
+                                </button>
+                            </div>
 
-                                    <div class="mt-4 space-y-4">
-                                        @foreach ($edit_items as $index => $item)
-                                            <div
-                                                class="bg-gray-50 p-3 rounded-lg flex flex-col gap-2 border border-gray-100">
-                                                <div class="flex justify-between">
-                                                    <span
-                                                        class="text-sm font-semibold text-gray-800">{{ $item['product_name'] }}</span>
-                                                    <span class="text-xs text-gray-500">Qty:
-                                                        {{ $item['quantity'] }}</span>
-                                                </div>
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Quantity</label>
-                                                    <input wire:model="edit_items.{{ $index }}.quantity"
-                                                        type="number"
-                                                        class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
-                                                    @error("edit_items.{$index}.quantity")
-                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Harga
-                                                        Satuan (Beli)</label>
-                                                    <input wire:model="edit_items.{{ $index }}.price"
-                                                        type="number" min="0" required
-                                                        class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
-                                                    @error("edit_items.{$index}.price")
-                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                            {{-- Editable Header --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Kode
+                                        Referensi</label>
+                                    <input type="text" wire:model="edit_reference_code"
+                                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    @error('edit_reference_code')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tanggal</label>
+                                    <input type="date" wire:model="edit_transaction_date"
+                                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    @error('edit_transaction_date')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Catatan</label>
+                                    <input type="text" wire:model="edit_notes"
+                                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
                                 </div>
                             </div>
-                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                <button type="submit"
-                                    class="inline-flex w-full justify-center rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">Simpan
-                                </button>
-                                <button type="button" wire:click="$set('showEditForm', false)"
-                                    class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
+
+                            {{-- Editable Detail Items --}}
+                            <div class="overflow-hidden rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th
+                                                class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Kode</th>
+                                            <th
+                                                class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Produk</th>
+                                            <th
+                                                class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Satuan</th>
+                                            <th
+                                                class="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">
+                                                Qty</th>
+                                            <th
+                                                class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide w-36">
+                                                Harga Satuan</th>
+                                            <th
+                                                class="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                        @foreach ($edit_items as $index => $item)
+                                            <tr>
+                                                <td class="px-4 py-2.5 text-sm text-gray-900">
+                                                    {{ $item['sku'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-900">
+                                                    {{ $item['product_name'] }}</td>
+                                                <td class="px-4 py-2.5 text-sm text-gray-700 text-center">
+                                                    {{ $item['satuan'] }}</td>
+                                                <td class="px-4 py-1.5 text-center">
+                                                    <input type="number" min="1"
+                                                        wire:model="edit_items.{{ $index }}.quantity"
+                                                        class="w-20 rounded-md border border-gray-300 px-2 py-1.5 text-sm text-center text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                                    @error("edit_items.{$index}.quantity")
+                                                        <span
+                                                            class="text-red-500 text-xs block">{{ $message }}</span>
+                                                    @enderror
+                                                </td>
+                                                <td class="px-4 py-1.5 text-right">
+                                                    <input type="number" min="0"
+                                                        wire:model="edit_items.{{ $index }}.price"
+                                                        class="w-32 rounded-md border border-gray-300 px-2 py-1.5 text-sm text-right text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                                    @error("edit_items.{$index}.price")
+                                                        <span
+                                                            class="text-red-500 text-xs block">{{ $message }}</span>
+                                                    @enderror
+                                                </td>
+                                                <td class="px-4 py-2.5 text-sm font-medium text-gray-900 text-right">
+                                                    Rp
+                                                    {{ number_format(($item['quantity'] ?? 0) * ($item['price'] ?? 0), 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="bg-gray-50">
+                                        <tr>
+                                            <td colspan="5"
+                                                class="px-4 py-2.5 text-sm font-semibold text-gray-900 text-right">
+                                                Total</td>
+                                            <td class="px-4 py-2.5 text-sm font-bold text-gray-900 text-right">
+                                                Rp
+                                                {{ number_format(collect($edit_items)->sum(fn($i) => ($i['quantity'] ?? 0) * ($i['price'] ?? 0)), 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
-                        </form>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-3">
+                            <button type="button" wire:click="updateTransaction"
+                                class="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:w-auto">
+                                Simpan Perubahan
+                            </button>
+                            <button type="button" wire:click="$set('showEditForm', false)"
+                                class="mt-3 sm:mt-0 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto">Batal</button>
+                        </div>
                     </div>
                 </div>
             </div>

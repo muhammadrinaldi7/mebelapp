@@ -26,6 +26,39 @@ class TransactionDetailObserver
     }
 
     /**
+     * Handle the TransactionDetail "updating" event.
+     * Adjust product stock based on quantity difference.
+     */
+    public function updating(TransactionDetail $detail): void
+    {
+        $transaction = $detail->transaction;
+        $product = $detail->product;
+
+        if (!$transaction || !$product) {
+            return;
+        }
+
+        $oldQty = $detail->getOriginal('quantity');
+        $newQty = $detail->quantity;
+        $diff = $newQty - $oldQty;
+
+        if ($diff === 0) {
+            return;
+        }
+
+        match ($transaction->type) {
+            // Barang Masuk: qty naik → stok naik, qty turun → stok turun
+            'in' => $diff > 0
+                ? $product->increment('current_stock', $diff)
+                : $product->decrement('current_stock', abs($diff)),
+            // Barang Keluar/Sale: qty naik → stok turun, qty turun → stok naik
+            'out', 'sale' => $diff > 0
+                ? $product->decrement('current_stock', $diff)
+                : $product->increment('current_stock', abs($diff)),
+        };
+    }
+
+    /**
      * Handle the TransactionDetail "deleted" event.
      * Reverse the stock change when a detail is deleted.
      */

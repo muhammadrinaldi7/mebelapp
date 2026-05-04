@@ -26,6 +26,14 @@ class TransactionOut extends Component
 
     public $search = '';
 
+    // Edit State
+    public $showEditForm = false;
+    public $edit_transaction_id = null;
+    public $edit_reference_code = '';
+    public $edit_transaction_date = '';
+    public $edit_notes = '';
+    public $edit_items = [];
+
     // Delete State
     public $showDeleteConfirm = false;
     public $delete_transaction_id = null;
@@ -79,6 +87,89 @@ class TransactionOut extends Component
         $this->out_reason = 'Pindah';
         $this->items = [['product_id' => '', 'quantity' => 1]];
         $this->showForm = true;
+    }
+
+    public function openEditForm($id)
+    {
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $transaction = Transaction::with('details.product')->findOrFail($id);
+
+        $this->edit_transaction_id = $transaction->id;
+        $this->edit_reference_code = $transaction->reference_code;
+        $this->edit_transaction_date = $transaction->transaction_date->format('Y-m-d');
+        $this->edit_notes = $transaction->notes ?: '';
+        $this->edit_items = [];
+
+        foreach ($transaction->details as $detail) {
+            $this->edit_items[] = [
+                'id' => $detail->id,
+                'product_id' => $detail->product_id,
+                'product_name' => $detail->product->name ?? 'Produk Terhapus',
+                'satuan' => $detail->product->satuan ?? '-',
+                'quantity' => $detail->quantity,
+                'current_stock' => $detail->product->current_stock ?? 0,
+            ];
+        }
+        $this->showEditForm = true;
+    }
+
+    public function updateTransaction()
+    {
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $this->validate([
+            'edit_reference_code' => 'required|string|max:255',
+            'edit_transaction_date' => 'required|date',
+            'edit_items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        // Validate stock availability for qty increases
+        foreach ($this->edit_items as $item) {
+            $detail = TransactionDetail::find($item['id']);
+            if ($detail) {
+                $oldQty = $detail->quantity;
+                $newQty = $item['quantity'];
+                $diff = $newQty - $oldQty;
+
+                if ($diff > 0) {
+                    // More items going out, check if stock is sufficient
+                    $product = Product::find($detail->product_id);
+                    if ($product && $product->current_stock < $diff) {
+                        $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan tambahan: {$diff}");
+                        return;
+                    }
+                }
+            }
+        }
+
+        DB::transaction(function () {
+            foreach ($this->edit_items as $item) {
+                $detail = TransactionDetail::find($item['id']);
+                if ($detail) {
+                    // Observer `updating` will handle stock adjustment automatically
+                    $detail->update([
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
+            }
+
+            $transaction = Transaction::find($this->edit_transaction_id);
+            if ($transaction) {
+                $transaction->update([
+                    'reference_code' => $this->edit_reference_code,
+                    'transaction_date' => $this->edit_transaction_date,
+                    'notes' => $this->edit_notes,
+                ]);
+            }
+        });
+
+        $this->showEditForm = false;
+        $this->dispatch('notify', type: 'success', message: 'Transaksi barang keluar berhasil diupdate.');
     }
 
     public function addItem()

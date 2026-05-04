@@ -42,6 +42,7 @@ class PermissionSeeder extends Seeder
 
             // Transaksi
             'edit-barang-masuk',
+            'edit-barang-keluar',
             'hapus-barang-masuk',
             'hapus-barang-keluar',
         ];
