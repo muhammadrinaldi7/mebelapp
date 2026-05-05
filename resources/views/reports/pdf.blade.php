@@ -122,30 +122,40 @@
         <table>
             <thead>
                 <tr>
-                    <th>SKU</th>
-                    <th>Nama Produk</th>
-                    <th class="text-right">Masuk (In)</th>
-                    <th class="text-right">Keluar (Out)</th>
-                    <th class="text-right">Terjual (Sale)</th>
-                    <th class="text-center">Status Mvmt</th>
+                    <th>Tanggal</th>
+                    <th>Kode Referensi</th>
+                    <th>Produk</th>
+                    <th class="text-center">Tipe Mutasi</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Harga/Unit</th>
+                    <th class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($productsMove as $pm)
+                @php $grandTotal = 0; @endphp
+                @foreach($mutations as $mutation)
+                @php $subtotal = $mutation->quantity * $mutation->price_at_transaction; $grandTotal += $subtotal; @endphp
                 <tr>
-                    <td>{{ $pm->sku }}</td>
-                    <td>{{ $pm->name }}</td>
-                    <td class="text-right">{{ $pm->total_in }}</td>
-                    <td class="text-right">{{ $pm->total_out }}</td>
-                    <td class="text-right font-bold">{{ $pm->total_sale }}</td>
-                    <td class="text-center">
-                        @if($pm->total_sale > 10) <span class="badge bg-green">Fast Moving</span>
-                        @elseif($pm->total_sale > 0) <span class="badge bg-blue">Normal</span>
-                        @elseif($pm->total_in == 0 && $pm->total_sale == 0) <span class="badge bg-red">Dead Stock</span>
-                        @else <span class="badge bg-gray">Slow Moving</span> @endif
+                    <td>{{ $mutation->transaction->transaction_date->format('d/m/Y') }}</td>
+                    <td class="font-bold">{{ $mutation->transaction->reference_code }}</td>
+                    <td>
+                        {{ $mutation->product->name ?? '-' }}
+                        <br><span style="font-size:8px;color:#999;">SKU: {{ $mutation->product->sku ?? '-' }}</span>
                     </td>
+                    <td class="text-center">
+                        @if($mutation->transaction->type === 'in') <span class="badge bg-green">MASUK</span>
+                        @elseif($mutation->transaction->type === 'out') <span class="badge bg-orange">KELUAR</span>
+                        @else <span class="badge bg-blue">TERJUAL</span> @endif
+                    </td>
+                    <td class="text-right font-bold">{{ $mutation->quantity }}</td>
+                    <td class="text-right">Rp {{ number_format($mutation->price_at_transaction, 0, ',', '.') }}</td>
+                    <td class="text-right font-bold">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
                 </tr>
                 @endforeach
+                <tr>
+                    <td colspan="6" class="text-right font-bold">GRAND TOTAL</td>
+                    <td class="text-right font-bold">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
+                </tr>
             </tbody>
         </table>
     @elseif($tab === 'profit')

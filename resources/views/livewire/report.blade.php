@@ -6,7 +6,7 @@
         </div>
         <div class="mt-4 sm:mt-0 flex gap-2">
             @can('export-laporan')
-                <a href="{{ route('report.export', ['type' => 'excel', 'tab' => $activeTab, 'from' => $dateFrom, 'to' => $dateTo, 'search' => $search, 'rt' => $reportType, 'cid' => $categoryId, 'bid' => $brandId, 'pid' => $compareProductId ?? '']) }}"
+                <a href="{{ route('report.export', ['type' => 'excel', 'tab' => $activeTab, 'from' => $dateFrom, 'to' => $dateTo, 'search' => $search, 'rt' => $reportType, 'mt' => $movementType, 'cid' => $categoryId, 'bid' => $brandId, 'pid' => $compareProductId ?? '']) }}"
                     class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 active:scale-95 transition-all">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -14,7 +14,7 @@
                     </svg>
                     Export Excel
                 </a>
-                <a href="{{ route('report.export', ['type' => 'pdf', 'tab' => $activeTab, 'from' => $dateFrom, 'to' => $dateTo, 'search' => $search, 'rt' => $reportType, 'cid' => $categoryId, 'bid' => $brandId, 'pid' => $compareProductId ?? '']) }}"
+                <a href="{{ route('report.export', ['type' => 'pdf', 'tab' => $activeTab, 'from' => $dateFrom, 'to' => $dateTo, 'search' => $search, 'rt' => $reportType, 'mt' => $movementType, 'cid' => $categoryId, 'bid' => $brandId, 'pid' => $compareProductId ?? '']) }}"
                     target="_blank"
                     class="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 active:scale-95 transition-all">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -29,7 +29,7 @@
 
     {{-- Tabs --}}
     <div class="mt-6 border-b border-gray-200">
-        <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
+        <nav class="-mb-px flex space-x-8 overflow-x-auto no-scrollbar" aria-label="Tabs">
             @can('lihat-laporan-transaksi')
                 <button wire:click="setTab('transactions')"
                     class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors {{ $activeTab === 'transactions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
@@ -60,7 +60,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                     </svg>
-                    Barang Masuk & Keluar
+                    Mutasi Barang
                 </button>
             @endcan
             @can('lihat-laporan-laba')
@@ -123,6 +123,20 @@
                         </select>
                     </div>
                 @endcan
+            @endif
+
+            @if ($activeTab === 'movement')
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tipe
+                        Mutasi</label>
+                    <select wire:model.live="movementType"
+                        class="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                        <option value="all">Semua Mutasi</option>
+                        <option value="in">Barang Masuk</option>
+                        <option value="out">Barang Keluar</option>
+                        <option value="sale">Penjualan</option>
+                    </select>
+                </div>
             @endif
 
             @if ($activeTab === 'stock')
@@ -220,22 +234,23 @@
                 </p>
             </div>
         @elseif($activeTab === 'movement')
-            <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-gray-500">Barang Masuk</p>
-                <p class="mt-1 text-xl font-bold text-gray-900">{{ $summary['totalInQty'] }}</p>
-            </div>
-            <div class="rounded-2xl bg-orange-50 p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
-                <p class="text-xs font-medium text-orange-600">Barang Keluar</p>
-                <p class="mt-1 text-xl font-bold text-orange-700">{{ $summary['totalOutQty'] }}</p>
-            </div>
             <div class="rounded-2xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200 text-center">
-                <p class="text-xs font-medium text-emerald-600">Total Laku Terjual</p>
-                <p class="mt-1 text-xl font-bold text-emerald-700">{{ $summary['totalSaleQty'] }}</p>
+                <p class="text-xs font-medium text-emerald-600">Total Masuk</p>
+                <p class="mt-1 text-xl font-bold text-emerald-700">{{ $summary['totalInQty'] }} Unit</p>
             </div>
-            {{-- <div class="rounded-2xl bg-red-50 p-4 shadow-sm ring-1 ring-red-200 text-center">
-                <p class="text-xs font-medium text-red-600">Barang Tidak Laku-laku</p>
-                <p class="mt-1 text-xl font-bold text-red-700">{{ $summary['deadStockCount'] }} Produk</p>
-            </div> --}}
+            <div class="rounded-2xl bg-orange-50 p-4 shadow-sm ring-1 ring-orange-200 text-center">
+                <p class="text-xs font-medium text-orange-600">Total Keluar</p>
+                <p class="mt-1 text-xl font-bold text-orange-700">{{ $summary['totalOutQty'] }} Unit</p>
+            </div>
+            <div class="rounded-2xl bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200 text-center">
+                <p class="text-xs font-medium text-blue-600">Total Terjual</p>
+                <p class="mt-1 text-xl font-bold text-blue-700">{{ $summary['totalSaleQty'] }} Unit</p>
+            </div>
+            <div class="rounded-2xl bg-purple-50 p-4 shadow-sm ring-1 ring-purple-200 text-center">
+                <p class="text-xs font-medium text-purple-600">Total Nilai Transaksi</p>
+                <p class="mt-1 text-lg font-bold text-purple-700">Rp
+                    {{ number_format($summary['totalValue'], 0, ',', '.') }}</p>
+            </div>
         @elseif($activeTab === 'profit')
             <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-900/5 text-center">
                 <p class="text-xs font-medium text-gray-500">Produk Terjual</p>
@@ -278,7 +293,7 @@
                 <div class="p-4">{{ $products->links() }}</div>
             @elseif($activeTab === 'movement')
                 @include('reports.tables.movement')
-                <div class="p-4">{{ $productsMove->links() }}</div>
+                <div class="p-4">{{ $mutations->links() }}</div>
             @elseif($activeTab === 'profit')
                 @include('reports.tables.profit')
                 <div class="p-4">{{ $profitDetails->links() }}</div>

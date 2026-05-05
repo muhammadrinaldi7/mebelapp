@@ -22,7 +22,8 @@ class TransactionIn extends Component
     public $transaction_date = '';
     public $notes = '';
     public $items = [];
-
+    public $start_date = '';
+    public $end_date = '';
     // Edit State
     public $showEditForm = false;
     public $edit_transaction_id = null;
@@ -86,6 +87,7 @@ class TransactionIn extends Component
                 'price' => $d->price_at_transaction,
                 'subtotal' => $d->quantity * $d->price_at_transaction,
             ])->toArray(),
+            'totalQty' => $trx->details->sum('quantity'),
         ];
         $this->showDetailModal = true;
     }
@@ -250,6 +252,8 @@ class TransactionIn extends Component
     {
         $transactions = Transaction::with('user', 'details.product')
             ->where('type', 'in')
+            ->when($this->start_date, fn($q) => $q->whereDate('transaction_date', '>=', $this->start_date))
+            ->when($this->end_date, fn($q) => $q->whereDate('transaction_date', '<=', $this->end_date))
             ->when($this->search, fn($q) => $q->where('reference_code', 'like', '%' . $this->search . '%'))
             ->latest('transaction_date')
             ->paginate(10);
