@@ -89,34 +89,39 @@
     @elseif($tab === 'movement')
         <table>
             <thead>
-                <tr><th colspan="6" style="text-align: center; font-size: 16px; font-weight: bold;">{{ $reportTitle ?? 'Pergerakan Fast & Slow Moving' }}</th></tr>
-                <tr><th colspan="6" style="text-align: center;">Periode: {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : 'Awal' }} - {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y') : 'Akhir' }}</th></tr>
-                <tr><th colspan="6"></th></tr>
+                <tr><th colspan="7" style="text-align: center; font-size: 16px; font-weight: bold;">{{ $reportTitle ?? 'Mutasi Barang' }}</th></tr>
+                <tr><th colspan="7" style="text-align: center;">Periode: {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : 'Awal' }} - {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d/m/Y') : 'Akhir' }}</th></tr>
+                <tr><th colspan="7"></th></tr>
                 <tr>
+                    <th style="font-weight: bold; text-align: left;">Tanggal</th>
+                    <th style="font-weight: bold; text-align: left;">Kode Referensi</th>
+                    <th style="font-weight: bold; text-align: left;">Produk</th>
                     <th style="font-weight: bold; text-align: left;">SKU</th>
-                    <th style="font-weight: bold; text-align: left;">Nama Produk</th>
-                    <th style="font-weight: bold; text-align: right;">Masuk (In)</th>
-                    <th style="font-weight: bold; text-align: right;">Keluar (Out)</th>
-                    <th style="font-weight: bold; text-align: right;">Terjual (Sale)</th>
-                    <th style="font-weight: bold; text-align: center;">Status Movement</th>
+                    <th style="font-weight: bold; text-align: center;">Tipe Mutasi</th>
+                    <th style="font-weight: bold; text-align: right;">Qty</th>
+                    <th style="font-weight: bold; text-align: right;">Harga/Unit</th>
+                    <th style="font-weight: bold; text-align: right;">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($productsMove as $pm)
+                @php $grandTotal = 0; @endphp
+                @foreach($mutations as $mutation)
+                @php $subtotal = $mutation->quantity * $mutation->price_at_transaction; $grandTotal += $subtotal; @endphp
                 <tr>
-                    <td>{{ $pm->sku }}</td>
-                    <td>{{ $pm->name }}</td>
-                    <td style="text-align: right;">{{ $pm->total_in }}</td>
-                    <td style="text-align: right;">{{ $pm->total_out }}</td>
-                    <td style="text-align: right; font-weight: bold;">{{ $pm->total_sale }}</td>
-                    <td style="text-center">
-                        @if($pm->total_sale > 10) Fast Moving
-                        @elseif($pm->total_sale > 0) Normal
-                        @elseif($pm->total_in == 0 && $pm->total_sale == 0) Dead Stock
-                        @else Slow Moving @endif
-                    </td>
+                    <td>{{ $mutation->transaction->transaction_date->format('d/m/Y') }}</td>
+                    <td style="font-weight: bold;">{{ $mutation->transaction->reference_code }}</td>
+                    <td>{{ $mutation->product->name ?? '-' }}</td>
+                    <td>{{ $mutation->product->sku ?? '-' }}</td>
+                    <td style="text-align: center;">{{ $mutation->transaction->type === 'in' ? 'MASUK' : ($mutation->transaction->type === 'out' ? 'KELUAR' : 'TERJUAL') }}</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $mutation->quantity }}</td>
+                    <td style="text-align: right;">{{ $mutation->price_at_transaction }}</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $subtotal }}</td>
                 </tr>
                 @endforeach
+                <tr>
+                    <td colspan="7" style="text-align: right; font-weight: bold;">GRAND TOTAL</td>
+                    <td style="text-align: right; font-weight: bold;">{{ $grandTotal }}</td>
+                </tr>
             </tbody>
         </table>
     @elseif($tab === 'profit')

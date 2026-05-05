@@ -19,6 +19,7 @@ class Report extends Component
     use WithPagination;
 
     public string $activeTab = 'transactions'; // transactions, stock, movement, profit, buy_price
+    public string $movementType = 'all'; // all, in, out, sale
 
     // Common Filters
     public string $search = '';
@@ -48,6 +49,7 @@ class Report extends Component
     public function updatingCategoryId() { $this->resetPage(); }
     public function updatingBrandId() { $this->resetPage(); }
     public function updatingCompareProductId() { $this->resetPage(); }
+    public function updatingMovementType() { $this->resetPage(); }
 
     public function setTab($tab)
     {
@@ -76,42 +78,17 @@ class Report extends Component
 
     private function getMovementQuery()
     {
-        // Calculate IN, OUT, SALE per product
-        $subIn = TransactionDetail::select('product_id', DB::raw('SUM(quantity) as qty_in'))
-            ->whereHas('transaction', fn($q) => $q->where('type', 'in')
-                ->when($this->dateFrom, fn($q2) => $q2->whereDate('transaction_date', '>=', $this->dateFrom))
-                ->when($this->dateTo, fn($q2) => $q2->whereDate('transaction_date', '<=', $this->dateTo)))
-            ->groupBy('product_id');
-
-        $subOut = TransactionDetail::select('product_id', DB::raw('SUM(quantity) as qty_out'))
-            ->whereHas('transaction', fn($q) => $q->where('type', 'out')
-                ->when($this->dateFrom, fn($q2) => $q2->whereDate('transaction_date', '>=', $this->dateFrom))
-                ->when($this->dateTo, fn($q2) => $q2->whereDate('transaction_date', '<=', $this->dateTo)))
-            ->groupBy('product_id');
-
-        $subSale = TransactionDetail::select('product_id', DB::raw('SUM(quantity) as qty_sale'))
-            ->whereHas('transaction', fn($q) => $q->where('type', 'sale')
-                ->when($this->dateFrom, fn($q2) => $q2->whereDate('transaction_date', '>=', $this->dateFrom))
-                ->when($this->dateTo, fn($q2) => $q2->whereDate('transaction_date', '<=', $this->dateTo)))
-            ->groupBy('product_id');
-
-        return Product::with('category', 'brand')
-            ->leftJoinSub($subIn, 't_in', function ($join) {
-                $join->on('products.id', '=', 't_in.product_id');
+        return TransactionDetail::with('product', 'transaction')
+            ->whereHas('transaction', function($q) {
+                $q->whereIn('type', ['in', 'out', 'sale'])
+                    ->when($this->movementType !== 'all', fn($q2) => $q2->where('type', $this->movementType))
+                    ->when($this->dateFrom, fn($q2) => $q2->whereDate('transaction_date', '>=', $this->dateFrom))
+                    ->when($this->dateTo, fn($q2) => $q2->whereDate('transaction_date', '<=', $this->dateTo));
             })
-            ->leftJoinSub($subOut, 't_out', function ($join) {
-                $join->on('products.id', '=', 't_out.product_id');
-            })
-            ->leftJoinSub($subSale, 't_sale', function ($join) {
-                $join->on('products.id', '=', 't_sale.product_id');
-            })
-            ->select('products.*', 
-                DB::raw('COALESCE(t_in.qty_in, 0) as total_in'),
-                DB::raw('COALESCE(t_out.qty_out, 0) as total_out'),
-                DB::raw('COALESCE(t_sale.qty_sale, 0) as total_sale')
-            )
-            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%'))
-            ->orderByRaw('COALESCE(t_sale.qty_sale, 0) DESC');
+            ->when($this->search, fn($q) => $q->whereHas('product', fn($q2) => $q2->where('name', 'like', '%' . $this->search . '%')->orWhere('sku', 'like', '%' . $this->search . '%')))
+            ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
+            ->orderBy('transactions.transaction_date', 'desc')
+            ->select('transaction_details.*');
     }
 
     private function getProfitQuery()
@@ -152,12 +129,15 @@ class Report extends Component
         if ($this->activeTab === 'movement') {
             $qm = clone $this->getMovementQuery();
             $items = $qm->get();
+            $totalIn = $items->filter(fn($d) => $d->transaction->type === 'in')->sum('quantity');
+            $totalOut = $items->filter(fn($d) => $d->transaction->type === 'out')->sum('quantity');
+            $totalSale = $items->filter(fn($d) => $d->transaction->type === 'sale')->sum('quantity');
+            $totalValue = $items->sum(fn($d) => $d->quantity * $d->price_at_transaction);
             return [
-                'totalInQty' => $items->sum('total_in'),
-                'totalOutQty' => $items->sum('total_out'),
-                'totalSaleQty' => $items->sum('total_sale'),
-                'topMoving' => $items->firstWhere('total_sale', '>', 0)->name ?? '-',
-                'deadStockCount' => $items->where('total_sale', 0)->where('total_in', 0)->count(),
+                'totalInQty' => $totalIn,
+                'totalOutQty' => $totalOut,
+                'totalSaleQty' => $totalSale,
+                'totalValue' => $totalValue,
             ];
         }
 
@@ -200,7 +180,7 @@ class Report extends Component
             $data['categories'] = Category::all();
             $data['brands'] = Brand::all();
         } elseif ($this->activeTab === 'movement') {
-            $data['productsMove'] = $this->getMovementQuery()->paginate(15);
+            $data['mutations'] = $this->getMovementQuery()->paginate(20);
         } elseif ($this->activeTab === 'profit') {
             $data['profitDetails'] = $this->getProfitQuery()->paginate(15);
         } elseif ($this->activeTab === 'buy_price') {

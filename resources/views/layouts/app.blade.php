@@ -32,10 +32,114 @@
         @media (prefers-color-scheme: light) {
             .ios-content-bg { background: #f2f2f7; }
         }
+
+        /* Sidebar collapse transitions */
+        .sidebar-transition {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .main-transition {
+            transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-text {
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            white-space: nowrap;
+        }
+        .sidebar-collapsed .sidebar-text {
+            opacity: 0;
+            transform: translateX(-8px);
+            width: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .sidebar-collapsed .sidebar-section-label {
+            opacity: 0;
+            height: 0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .sidebar-section-label {
+            transition: opacity 0.2s ease, height 0.15s ease;
+        }
+
+        /* Tooltip for collapsed sidebar */
+        .sidebar-collapsed .ios-nav-item {
+            position: relative;
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .sidebar-collapsed .ios-nav-item svg {
+            margin: 0;
+        }
+        /* Static .nav-tooltip spans are hidden; we use a floating JS tooltip instead */
+        .nav-tooltip {
+            display: none;
+        }
+        /* Floating tooltip element */
+        #sidebar-floating-tooltip {
+            position: fixed;
+            background: #1e1b4b;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 9999;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+        }
+        #sidebar-floating-tooltip.visible {
+            opacity: 1;
+        }
+        #sidebar-floating-tooltip::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent #1e1b4b transparent transparent;
+        }
+
+        /* Collapse toggle button */
+        .collapse-toggle {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .collapse-toggle:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        .collapse-toggle svg {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-collapsed .collapse-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        /* User profile in collapsed state */
+        .sidebar-collapsed .user-profile-card {
+            padding: 8px;
+            justify-content: center;
+        }
+        .sidebar-collapsed .user-profile-details,
+        .sidebar-collapsed .user-logout-form {
+            display: none;
+        }
     </style>
 </head>
 <body class="h-full ios-content-bg">
-    <div x-data="{ sidebarOpen: false }" class="min-h-screen flex">
+    <div x-data="{
+            sidebarOpen: false,
+            sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+            toggleCollapse() {
+                this.sidebarCollapsed = !this.sidebarCollapsed;
+                localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+            }
+        }" class="min-h-screen flex">
 
         {{-- Mobile overlay --}}
         <div x-show="sidebarOpen"
@@ -63,12 +167,14 @@
         </div>
 
         {{-- Desktop sidebar --}}
-        <div class="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0">
+        <div id="desktop-sidebar" class="hidden md:flex md:flex-col md:fixed md:inset-y-0 sidebar-transition"
+             :class="sidebarCollapsed ? 'md:w-[70px] sidebar-collapsed' : 'md:w-72'">
             @include('layouts.partials.sidebar')
         </div>
 
         {{-- Main content --}}
-        <div class="md:pl-72 flex flex-col flex-1 min-h-screen min-w-0">
+        <div class="flex flex-col flex-1 min-h-screen min-w-0 main-transition"
+             :class="sidebarCollapsed ? 'md:pl-[70px]' : 'md:pl-72'">
             {{-- iOS-style top bar for mobile --}}
             <div class="sticky top-0 z-30 md:hidden ios-glass-bar border-b border-gray-200/60">
                 <div class="flex items-center justify-between px-4 h-14">
@@ -141,5 +247,42 @@
         <style>@keyframes shrink-toast { from { width: 100%; } to { width: 0%; } }</style>
     </div>
     @livewireScripts
+
+    {{-- Floating tooltip for collapsed sidebar --}}
+    <div id="sidebar-floating-tooltip"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltip = document.getElementById('sidebar-floating-tooltip');
+
+            function initTooltips() {
+                const desktopSidebar = document.getElementById('desktop-sidebar');
+                if (!desktopSidebar) return;
+                
+                desktopSidebar.querySelectorAll('.ios-nav-item[data-tooltip]').forEach(function(navItem) {
+                    navItem.addEventListener('mouseenter', function() {
+                        // Only show tooltip when sidebar is collapsed
+                        if (!navItem.closest('.sidebar-collapsed')) return;
+
+                        const text = navItem.getAttribute('data-tooltip');
+                        if (!text) return;
+
+                        tooltip.textContent = text;
+
+                        const rect = navItem.getBoundingClientRect();
+                        tooltip.style.left = (rect.right + 12) + 'px';
+                        tooltip.style.top = (rect.top + rect.height / 2) + 'px';
+                        tooltip.style.transform = 'translateY(-50%)';
+                        tooltip.classList.add('visible');
+                    });
+
+                    navItem.addEventListener('mouseleave', function() {
+                        tooltip.classList.remove('visible');
+                    });
+                });
+            }
+
+            initTooltips();
+        });
+    </script>
 </body>
 </html>

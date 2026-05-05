@@ -54,37 +54,20 @@ class ReportController extends Controller
             $data['reportTitle'] = 'Stok & Valuasi Aset';
         }
         elseif ($tab === 'movement') {
-            $subIn = TransactionDetail::select('product_id', DB::raw('SUM(quantity) as qty_in'))
-                ->whereHas('transaction', fn($q) => $q->where('type', 'in')
-                    ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
-                    ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to)))
-                ->groupBy('product_id');
-
-            $subOut = TransactionDetail::select('product_id', DB::raw('SUM(quantity) as qty_out'))
-                ->whereHas('transaction', fn($q) => $q->where('type', 'out')
-                    ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
-                    ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to)))
-                ->groupBy('product_id');
-
-            $subSale = TransactionDetail::select('product_id', DB::raw('SUM(quantity) as qty_sale'))
-                ->whereHas('transaction', fn($q) => $q->where('type', 'sale')
-                    ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
-                    ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to)))
-                ->groupBy('product_id');
-
-            $data['productsMove'] = Product::with('category', 'brand')
-                ->leftJoinSub($subIn, 't_in', function ($join) { $join->on('products.id', '=', 't_in.product_id'); })
-                ->leftJoinSub($subOut, 't_out', function ($join) { $join->on('products.id', '=', 't_out.product_id'); })
-                ->leftJoinSub($subSale, 't_sale', function ($join) { $join->on('products.id', '=', 't_sale.product_id'); })
-                ->select('products.*', 
-                    DB::raw('COALESCE(t_in.qty_in, 0) as total_in'),
-                    DB::raw('COALESCE(t_out.qty_out, 0) as total_out'),
-                    DB::raw('COALESCE(t_sale.qty_sale, 0) as total_sale')
-                )
-                ->when($search, fn($q) => $q->where('name', 'like', '%' . $search . '%')->orWhere('sku', 'like', '%' . $search . '%'))
-                ->orderByRaw('COALESCE(t_sale.qty_sale, 0) DESC')
+            $mt = $request->get('mt', 'all');
+            $data['mutations'] = TransactionDetail::with('product', 'transaction')
+                ->whereHas('transaction', function($q) use ($mt, $from, $to) {
+                    $q->whereIn('type', ['in', 'out', 'sale'])
+                        ->when($mt !== 'all', fn($q2) => $q2->where('type', $mt))
+                        ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
+                        ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to));
+                })
+                ->when($search, fn($q) => $q->whereHas('product', fn($q2) => $q2->where('name', 'like', '%' . $search . '%')->orWhere('sku', 'like', '%' . $search . '%')))
+                ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
+                ->orderBy('transactions.transaction_date', 'desc')
+                ->select('transaction_details.*')
                 ->get();
-            $data['reportTitle'] = 'Fast & Slow Moving (Pergerakan Barang)';
+            $data['reportTitle'] = 'Mutasi Barang';
         }
         elseif ($tab === 'profit') {
             $data['profitDetails'] = TransactionDetail::with('product', 'transaction')

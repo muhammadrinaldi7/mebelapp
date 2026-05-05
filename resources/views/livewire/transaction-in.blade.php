@@ -106,7 +106,9 @@
                                         <button type="button" x-show="!open && selectedLabel"
                                             @click="open = true; $nextTick(() => $refs.searchInput.focus())"
                                             class="block w-full rounded-md border border-gray-300 px-3 py-2 text-left text-gray-900 shadow-sm hover:bg-gray-50 sm:text-sm bg-white">
-                                            <span x-text="selectedLabel" class="truncate block"></span>
+                                            <span
+                                                x-text="selectedLabel.length > 50 ? selectedLabel.substring(0, 50) + '...' : selectedLabel"
+                                                class="truncate block"></span>
                                         </button>
                                         <button type="button" x-show="selectedLabel" @click="clear()"
                                             class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
@@ -121,7 +123,8 @@
                                         <template x-for="product in filtered" :key="product.id">
                                             <button type="button" @click="select(product)"
                                                 class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
-                                                <span x-text="product.label"></span>
+                                                <span
+                                                    x-text="product.label.length > 50 ? product.label.substring(0, 50) + '...' : product.label"></span>
                                             </button>
                                         </template>
                                         <div x-show="filtered.length === 0"
@@ -176,11 +179,22 @@
     @endif
 
     {{-- Transaction History --}}
-    <div class="mt-6">
-        <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari kode referensi..."
-            class="block w-full sm:w-64 rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+    <div class="flex flex-row mt-5 items-center justify-between">
+        <div class="">
+            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari kode referensi..."
+                class="block w-full sm:w-64 bg-white rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+        </div>
+        <div class="flex flex-row items-center gap-2">
+            <input type="date" wire:model.live.debounce.300ms="start_date"
+                class="bg-white rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+            <input type="date" wire:model.live.debounce.300ms="end_date"
+                class="bg-white rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+            <a href="{{ route('report.export', ['type' => 'pdf', 'tab' => 'movement', 'from' => $this->start_date, 'to' => $this->end_date, 'mt' => 'in']) }}"
+                target="_blank"
+                class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">PDF</a>
+        </div>
     </div>
-    <div class="mt-4 overflow-hidden shadow ring-1 ring-black/5 sm:rounded-lg">
+    <div class="mt-4 overflow-auto shadow ring-1 ring-black/5 sm:rounded-lg">
         <table class="min-w-full divide-y divide-gray-300">
             <thead class="bg-gray-50">
                 <tr>
@@ -437,36 +451,40 @@
                                 </button>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4 mb-5">
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kode
-                                        Referensi</p>
-                                    <p class="mt-1 text-sm font-medium text-gray-900">
-                                        {{ $detail_transaction['reference_code'] }}</p>
+                            <div class="flex flex-row gap-5 justify-between mb-5">
+                                <div class="flex flex-col gap-5">
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kode
+                                            Referensi</p>
+                                        <p class="mt-1 text-sm font-medium text-gray-900">
+                                            {{ $detail_transaction['reference_code'] }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            Tanggal</p>
+                                        <p class="mt-1 text-sm font-medium text-gray-900">
+                                            {{ $detail_transaction['transaction_date'] }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                        Tanggal</p>
-                                    <p class="mt-1 text-sm font-medium text-gray-900">
-                                        {{ $detail_transaction['transaction_date'] }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                        Dibuat Oleh</p>
-                                    <p class="mt-1 text-sm font-medium text-gray-900">
-                                        {{ $detail_transaction['user_name'] }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                        Catatan</p>
-                                    <p class="mt-1 text-sm font-medium text-gray-900">
-                                        {{ $detail_transaction['notes'] }}</p>
+                                <div class="flex flex-col gap-5">
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            Dibuat Oleh</p>
+                                        <p class="mt-1 text-sm font-medium text-gray-900">
+                                            {{ $detail_transaction['user_name'] }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            Catatan</p>
+                                        <p class="mt-1 text-sm font-medium text-gray-900">
+                                            {{ $detail_transaction['notes'] }}</p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="overflow-hidden rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
+                            <div class="max-h-[50dvh] overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y-2 divide-gray-200">
+                                    <thead class="bg-gray-50 sticky top-0">
                                         <tr>
                                             <th
                                                 class="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -508,11 +526,14 @@
                                             </tr>
                                         @endforeach
                                     </tbody>
-                                    <tfoot class="bg-gray-50">
+                                    <tfoot class="bg-gray-50 sticky bottom-0">
                                         <tr>
                                             <td colspan="4"
                                                 class="px-4 py-2.5 text-sm font-semibold text-gray-900 text-right">
                                                 Total</td>
+                                            <td class="px-4 py-2.5 text-sm font-bold text-gray-900 text-right">
+                                                {{ $detail_transaction['totalQty'] }}
+                                            </td>
                                             <td class="px-4 py-2.5 text-sm font-bold text-gray-900 text-right">
                                                 Rp
                                                 {{ number_format($detail_transaction['total_amount'], 0, ',', '.') }}
