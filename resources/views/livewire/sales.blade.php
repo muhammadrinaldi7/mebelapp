@@ -350,7 +350,8 @@
                         @endphp
                         <tr class="hover:bg-gray-50/50">
                             <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
-                                <div class="font-bold text-gray-900">{{ $trx->reference_code }}</div>
+                                <button type="button" wire:click="openDetailModal({{ $trx->id }})"
+                                    class="font-bold text-blue-600 hover:text-blue-800 hover:underline focus:outline-none">{{ $trx->reference_code }}</button>
                                 <div class="text-xs font-medium text-gray-500 mt-0.5 mb-1.5">
                                     {{ $trx->transaction_date->format('d/m/Y') }}</div>
                                 <div class="flex flex-col gap-1 items-start mt-1">
@@ -552,6 +553,211 @@
                             <button type="button" wire:click="$set('showEditForm', false)"
                                 class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Modal Detail Transaksi --}}
+    @if ($showDetailModal && $selectedTransaction)
+        <div class="relative z-50">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
+
+                        <!-- Header -->
+                        <div
+                            class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Detail Penjualan:
+                                    {{ $selectedTransaction->reference_code }}</h3>
+                                <p class="text-blue-100 text-sm mt-1">
+                                    {{ \Carbon\Carbon::parse($selectedTransaction->transaction_date)->format('d F Y') }}
+                                </p>
+                            </div>
+                            <button wire:click="closeDetailModal"
+                                class="text-blue-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="p-6">
+                            <!-- Info Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+                                <!-- Customer Info -->
+                                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <h4
+                                        class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                        Informasi Pelanggan</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">Nama:</span>
+                                            <span
+                                                class="font-semibold text-gray-900">{{ $selectedTransaction->customer_name ?: 'Umum (Tidak Terdata)' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">Telepon/WA:</span>
+                                            <span
+                                                class="font-medium text-gray-900">{{ $selectedTransaction->customer_phone ?: '-' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">Alamat:</span>
+                                            <span
+                                                class="font-medium text-gray-900 text-right">{{ $selectedTransaction->customer_address ?: '-' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">Sales/Penjual:</span>
+                                            <span
+                                                class="font-medium text-indigo-600">{{ $selectedTransaction->salesperson_name ?: '-' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Status Info -->
+                                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <h4
+                                        class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                        Status & Pengiriman</h4>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-500">Pembayaran:</span>
+                                            @if ($selectedTransaction->payment_status === 'lunas')
+                                                <span
+                                                    class="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold">LUNAS</span>
+                                            @elseif($selectedTransaction->payment_status === 'dp')
+                                                <span
+                                                    class="px-2 py-1 rounded bg-yellow-100 text-yellow-700 text-xs font-bold">DP
+                                                    / HUTANG</span>
+                                            @else
+                                                <span
+                                                    class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold">BELUM
+                                                    DIBAYAR</span>
+                                            @endif
+                                        </div>
+                                        @if ($selectedTransaction->payment_status === 'dp')
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Nominal DP:</span>
+                                                <span class="font-bold text-yellow-600">Rp
+                                                    {{ number_format($selectedTransaction->down_payment, 0, ',', '.') }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Sisa Tagihan:</span>
+                                                <span class="font-bold text-red-600">Rp
+                                                    {{ number_format($selectedTransaction->total_amount - $selectedTransaction->discount + $selectedTransaction->shipping_cost - $selectedTransaction->down_payment, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-500">Pengiriman:</span>
+                                            <span
+                                                class="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs font-bold uppercase">{{ str_replace('_', ' ', $selectedTransaction->shipping_status) }}</span>
+                                        </div>
+                                        @if ($selectedTransaction->driver_name)
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Nama Supir:</span>
+                                                <span
+                                                    class="font-medium text-gray-900">{{ $selectedTransaction->driver_name }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Items Table -->
+                            <h4
+                                class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                Rincian Produk</h4>
+                            <div class="overflow-x-auto rounded-xl border border-gray-200 mb-6">
+                                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left font-semibold text-gray-600">Produk</th>
+                                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Harga Satuan
+                                            </th>
+                                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Qty</th>
+                                            <th class="px-4 py-3 text-right font-semibold text-gray-600">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                        @foreach ($selectedTransaction->details as $item)
+                                            <tr>
+                                                <td class="px-4 py-3">
+                                                    <div class="font-medium text-gray-900">
+                                                        {{ $item->product->name ?? '-' }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $item->product->sku ?? '' }}
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 text-center text-gray-600">Rp
+                                                    {{ number_format($item->price_at_transaction, 0, ',', '.') }}</td>
+                                                <td class="px-4 py-3 text-center font-semibold">{{ $item->quantity }}
+                                                </td>
+                                                <td class="px-4 py-3 text-right font-bold text-gray-800">Rp
+                                                    {{ number_format($item->price_at_transaction * $item->quantity, 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Totals -->
+                            <div class="flex justify-end">
+                                <div
+                                    class="w-full md:w-1/2 lg:w-1/3 space-y-2 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Subtotal:</span>
+                                        <span class="font-semibold text-gray-900">Rp
+                                            {{ number_format($selectedTransaction->total_amount, 0, ',', '.') }}</span>
+                                    </div>
+                                    @if ($selectedTransaction->discount > 0)
+                                        <div class="flex justify-between text-red-500">
+                                            <span>Diskon:</span>
+                                            <span class="font-semibold">- Rp
+                                                {{ number_format($selectedTransaction->discount, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if ($selectedTransaction->shipping_cost > 0)
+                                        <div class="flex justify-between text-green-600">
+                                            <span>Ongkos Kirim:</span>
+                                            <span class="font-semibold">+ Rp
+                                                {{ number_format($selectedTransaction->shipping_cost, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    <div class="pt-2 border-t border-gray-200 flex justify-between items-center">
+                                        <span class="font-bold text-gray-900">GRAND TOTAL:</span>
+                                        <span class="text-lg font-black text-blue-600">Rp
+                                            {{ number_format($selectedTransaction->total_amount - $selectedTransaction->discount + $selectedTransaction->shipping_cost, 0, ',', '.') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if ($selectedTransaction->notes)
+                                <div
+                                    class="mt-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-200">
+                                    <span class="font-bold">Catatan:</span> {{ $selectedTransaction->notes }}
+                                </div>
+                            @endif
+
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
+                            <a href="{{ route('sales.invoice', $selectedTransaction->id) }}" target="_blank"
+                                class="inline-flex justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 transition-colors">
+                                Cetak Nota
+                            </a>
+                            <button type="button" wire:click="closeDetailModal"
+                                class="inline-flex justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                                Tutup
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
