@@ -19,7 +19,9 @@ class Sales extends Component
 
     public $showForm = false;
     public $showEditForm = false;
+    public $showDetailModal = false;
     public $editingTransactionId = null;
+    public $selectedTransaction = null;
     public $reference_code = '';
     public $transaction_date = '';
     public $notes = '';
@@ -200,6 +202,20 @@ class Sales extends Component
             $this->showEditForm = false;
             $this->dispatch('notify', type: 'success', message: 'Status transaksi berhasil diperbarui.');
         }
+    }
+
+    public function openDetailModal($id)
+    {
+        $this->selectedTransaction = Transaction::with(['user', 'details.product', 'details.product.category', 'details.product.brand'])->find($id);
+        if ($this->selectedTransaction) {
+            $this->showDetailModal = true;
+        }
+    }
+
+    public function closeDetailModal()
+    {
+        $this->showDetailModal = false;
+        $this->selectedTransaction = null;
     }
 
     public function getSubtotalProperty()
