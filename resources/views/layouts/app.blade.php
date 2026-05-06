@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,39 +12,52 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     @livewireStyles
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
         .ios-sidebar {
             background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%);
         }
+
         .ios-nav-item {
             transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
+
         .ios-nav-item:active {
             transform: scale(0.97);
         }
+
         .ios-glass-bar {
-            background: rgba(255,255,255,0.85);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
         }
+
         .ios-content-bg {
             background: #f2f2f7;
         }
+
         @media (prefers-color-scheme: light) {
-            .ios-content-bg { background: #f2f2f7; }
+            .ios-content-bg {
+                background: #f2f2f7;
+            }
         }
 
         /* Sidebar collapse transitions */
         .sidebar-transition {
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .main-transition {
             transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .sidebar-text {
             transition: opacity 0.2s ease, transform 0.2s ease;
             white-space: nowrap;
         }
+
         .sidebar-collapsed .sidebar-text {
             opacity: 0;
             transform: translateX(-8px);
@@ -51,6 +65,7 @@
             overflow: hidden;
             pointer-events: none;
         }
+
         .sidebar-collapsed .sidebar-section-label {
             opacity: 0;
             height: 0;
@@ -58,6 +73,7 @@
             padding: 0;
             overflow: hidden;
         }
+
         .sidebar-section-label {
             transition: opacity 0.2s ease, height 0.15s ease;
         }
@@ -69,13 +85,16 @@
             padding-left: 0;
             padding-right: 0;
         }
+
         .sidebar-collapsed .ios-nav-item svg {
             margin: 0;
         }
+
         /* Static .nav-tooltip spans are hidden; we use a floating JS tooltip instead */
         .nav-tooltip {
             display: none;
         }
+
         /* Floating tooltip element */
         #sidebar-floating-tooltip {
             position: fixed;
@@ -90,11 +109,13 @@
             pointer-events: none;
             transition: opacity 0.15s ease;
             z-index: 9999;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
         }
+
         #sidebar-floating-tooltip.visible {
             opacity: 1;
         }
+
         #sidebar-floating-tooltip::before {
             content: '';
             position: absolute;
@@ -110,12 +131,15 @@
         .collapse-toggle {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .collapse-toggle:hover {
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
         }
+
         .collapse-toggle svg {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .sidebar-collapsed .collapse-toggle svg {
             transform: rotate(180deg);
         }
@@ -125,42 +149,44 @@
             padding: 8px;
             justify-content: center;
         }
+
         .sidebar-collapsed .user-profile-details,
         .sidebar-collapsed .user-logout-form {
             display: none;
         }
     </style>
 </head>
+
 <body class="h-full ios-content-bg">
     <div x-data="{
-            sidebarOpen: false,
-            sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-            toggleCollapse() {
-                this.sidebarCollapsed = !this.sidebarCollapsed;
-                localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
-            }
-        }" class="min-h-screen flex">
+        sidebarOpen: false,
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        toggleCollapse() {
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+        }
+    }" class="min-h-screen flex">
 
         {{-- Mobile overlay --}}
-        <div x-show="sidebarOpen"
-             x-transition:enter="transition-opacity ease-out duration-300"
-             x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-in duration-200"
-             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-             @click="sidebarOpen = false" style="display:none;"></div>
+        <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-out duration-300"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+            @click="sidebarOpen = false" style="display:none;"></div>
 
         {{-- Mobile sidebar (full height, slides from left) --}}
-        <div x-show="sidebarOpen"
-             x-transition:enter="transition ease-out duration-300 transform"
-             x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-             x-transition:leave="transition ease-in duration-200 transform"
-             x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
-             class="fixed inset-y-0 left-0 z-50 w-72 flex flex-col md:hidden" style="display:none;">
+        <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-50 w-72 flex flex-col md:hidden"
+            style="display:none;">
             {{-- Close button --}}
             <div class="absolute top-4 right-[-44px]">
-                <button @click="sidebarOpen = false" class="w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/90">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button @click="sidebarOpen = false"
+                    class="w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/90">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
             @include('layouts.partials.sidebar')
@@ -168,19 +194,22 @@
 
         {{-- Desktop sidebar --}}
         <div id="desktop-sidebar" class="hidden md:flex md:flex-col md:fixed md:inset-y-0 sidebar-transition"
-             :class="sidebarCollapsed ? 'md:w-[70px] sidebar-collapsed' : 'md:w-72'">
+            :class="sidebarCollapsed ? 'md:w-[70px] sidebar-collapsed' : 'md:w-72'">
             @include('layouts.partials.sidebar')
         </div>
 
         {{-- Main content --}}
         <div class="flex flex-col flex-1 min-h-screen min-w-0 main-transition"
-             :class="sidebarCollapsed ? 'md:pl-[70px]' : 'md:pl-72'">
+            :class="sidebarCollapsed ? 'md:pl-[70px]' : 'md:pl-72'">
             {{-- iOS-style top bar for mobile --}}
             <div class="sticky top-0 z-30 md:hidden ios-glass-bar border-b border-gray-200/60">
                 <div class="flex items-center justify-between px-4 h-14">
-                    <button type="button" @click="sidebarOpen = true" class="p-1.5 -ml-1.5 rounded-lg text-gray-600 hover:bg-gray-100/80 active:bg-gray-200/80 transition-colors">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    <button type="button" @click="sidebarOpen = true"
+                        class="p-1.5 -ml-1.5 rounded-lg text-gray-600 hover:bg-gray-100/80 active:bg-gray-200/80 transition-colors">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                         </svg>
                     </button>
                     <span class="text-[17px] font-semibold text-gray-900 tracking-tight">{{ config('app.name') }}</span>
@@ -198,58 +227,82 @@
 
         {{-- Global Toast Notification --}}
         <div x-data="{
-                toasts: [],
-                add(type, message) {
-                    const id = Date.now();
-                    this.toasts.push({ id, type, message });
-                    setTimeout(() => this.remove(id), 5000);
-                },
-                remove(id) {
-                    this.toasts = this.toasts.filter(t => t.id !== id);
-                }
-            }"
-            @notify.window="add($event.detail.type, $event.detail.message)"
+            toasts: [],
+            add(type, message) {
+                const id = Date.now();
+                this.toasts.push({ id, type, message });
+                setTimeout(() => this.remove(id), 5000);
+            },
+            remove(id) {
+                this.toasts = this.toasts.filter(t => t.id !== id);
+            }
+        }" @notify.window="add($event.detail.type, $event.detail.message)"
             class="fixed bottom-5 right-5 z-100 flex flex-col gap-3 pointer-events-none">
-            
+
             <template x-for="toast in toasts" :key="toast.id">
-                <div x-show="toast"
-                    x-transition:enter="transition ease-out duration-300 transform"
+                <div x-show="toast" x-transition:enter="transition ease-out duration-300 transform"
                     x-transition:enter-start="opacity-0 translate-y-4"
                     x-transition:enter-end="opacity-100 translate-y-0"
                     x-transition:leave="transition ease-in duration-200 transform"
                     x-transition:leave-start="opacity-100 translate-y-0"
                     x-transition:leave-end="opacity-0 translate-y-4"
                     class="pointer-events-auto w-80 max-w-sm rounded-xl overflow-hidden bg-white/90 backdrop-blur-xl shadow-lg ring-1 ring-black/5 flex items-start gap-0.5 relative group">
-                    <div class="shrink-0 w-12 flex items-center justify-center p-3 relative" 
+                    <div class="shrink-0 w-12 flex items-center justify-center p-3 relative"
                         :class="toast.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'">
-                        <div class="absolute inset-y-0 right-0 w-px" :class="toast.type === 'error' ? 'bg-red-100' : 'bg-emerald-100'"></div>
+                        <div class="absolute inset-y-0 right-0 w-px"
+                            :class="toast.type === 'error' ? 'bg-red-100' : 'bg-emerald-100'"></div>
                         <template x-if="toast.type === 'error'">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
                         </template>
                         <template x-if="toast.type !== 'error'">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </template>
                     </div>
                     <div class="flex-1 p-3 px-4">
-                        <p class="text-xs font-bold uppercase tracking-wider mb-0.5" :class="toast.type === 'error' ? 'text-red-700' : 'text-emerald-700'" x-text="toast.type === 'error' ? 'Proses Gagal' : 'Berhasil'"></p>
+                        <p class="text-xs font-bold uppercase tracking-wider mb-0.5"
+                            :class="toast.type === 'error' ? 'text-red-700' : 'text-emerald-700'"
+                            x-text="toast.type === 'error' ? 'Proses Gagal' : 'Berhasil'"></p>
                         <p class="text-sm font-medium text-gray-700" x-text="toast.message"></p>
                     </div>
-                    <button @click="remove(toast.id)" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <button @click="remove(toast.id)"
+                        class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                     <!-- Loading bar animation -->
-                    <div class="absolute bottom-0 left-0 h-1 bg-linear-to-r" 
+                    <div class="absolute bottom-0 left-0 h-1 bg-linear-to-r"
                         :class="toast.type === 'error' ? 'from-red-500 to-orange-400' : 'from-emerald-500 to-green-400'"
                         style="animation: shrink-toast infinite 5000ms linear;" x-ref="loader"></div>
                 </div>
             </template>
         </div>
-        <style>@keyframes shrink-toast { from { width: 100%; } to { width: 0%; } }</style>
+        <style>
+            @keyframes shrink-toast {
+                from {
+                    width: 100%;
+                }
+
+                to {
+                    width: 0%;
+                }
+            }
+        </style>
     </div>
     @livewireScripts
 
     {{-- Floating tooltip for collapsed sidebar --}}
     <div id="sidebar-floating-tooltip"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tooltip = document.getElementById('sidebar-floating-tooltip');
@@ -257,7 +310,7 @@
             function initTooltips() {
                 const desktopSidebar = document.getElementById('desktop-sidebar');
                 if (!desktopSidebar) return;
-                
+
                 desktopSidebar.querySelectorAll('.ios-nav-item[data-tooltip]').forEach(function(navItem) {
                     navItem.addEventListener('mouseenter', function() {
                         // Only show tooltip when sidebar is collapsed
@@ -282,7 +335,13 @@
             }
 
             initTooltips();
+            // FORMAT RUPIAH input
+            function formatNumber(e) {
+                let value = e.value.replace(/\D/g, ""); // Hapus semua karakter non-angka
+                e.value = new Intl.NumberFormat('id-ID').format(value);
+            }
         });
     </script>
 </body>
+
 </html>

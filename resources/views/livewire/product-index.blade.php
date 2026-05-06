@@ -57,7 +57,9 @@
                 @forelse($products as $product)
                     <tr>
                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">
-                            {{ $product->sku }}</td>
+                            <a href="{{ route('products.show', $product->id) }}"
+                                class="hover:text-blue-600">{{ $product->sku }}</a>
+                        </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $product->name }}</td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $product->brand->name ?? '-' }}
                         </td>
@@ -111,9 +113,13 @@
                                 class="mt-1 block w-full rounded-md border {{ $skuExists ? 'border-red-400 ring-2 ring-red-200' : 'border-gray-300' }} px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm"
                                 placeholder="Masukkan kode SKU">
                             @if ($skuExists)
-                                <div class="mt-1.5 flex items-start gap-1.5 rounded-md bg-red-50 px-2.5 py-2 ring-1 ring-inset ring-red-200">
-                                    <svg class="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+                                <div
+                                    class="mt-1.5 flex items-start gap-1.5 rounded-md bg-red-50 px-2.5 py-2 ring-1 ring-inset ring-red-200">
+                                    <svg class="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                                            clip-rule="evenodd" />
                                     </svg>
                                     <div>
                                         <p class="text-xs font-semibold text-red-700">SKU sudah digunakan!</p>
@@ -177,7 +183,8 @@
                                     <button type="button" x-show="selectedLabel" @click="clear()"
                                         class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
                                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                            <path
+                                                d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                                         </svg>
                                     </button>
                                 </div>
