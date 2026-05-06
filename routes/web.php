@@ -12,6 +12,7 @@ use App\Livewire\UserManagement;
 use App\Livewire\RoleManagement;
 use App\Http\Controllers\ReportController;
 use App\Livewire\ExpenseIndex;
+use App\Livewire\ProductDetail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,6 +22,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductIndex::class)->name('products.index');
+    Route::get('/product/{id}', ProductDetail::class)->name('products.show');
     Route::get('/brands', BrandIndex::class)->name('brands.index');
     Route::get('/categories', CategoryIndex::class)->name('categories.index');
     Route::get('/transactions/in', TransactionIn::class)->name('transactions.in');
@@ -41,4 +43,3 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/expenses', ExpenseIndex::class)->name('expenses.index');
     });
 });
-

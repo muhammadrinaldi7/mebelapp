@@ -212,7 +212,8 @@ class Sales extends Component
         $sub = $this->subtotal;
         $disc = (float)($this->discount ?: 0);
         $ship = (float)($this->shipping_cost ?: 0);
-        return $sub - $disc + $ship;
+        $dp = (float)($this->down_payment ?: 0);
+        return $sub - $disc + $ship - $dp;
     }
 
     public function render()
@@ -229,4 +230,3 @@ class Sales extends Component
         ]);
     }
 }
-

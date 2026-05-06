@@ -130,8 +130,23 @@
                             <label
                                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nominal
                                 DP / Masuk (Rp)</label>
-                            <input wire:model="down_payment" type="number" min="0" placeholder="Misal: 500000"
-                                class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                            <div x-data="{
+                                displayValue: '',
+                                updateValue(val) {
+                                    // Hapus semua kecuali angka
+                                    let raw = val.replace(/\D/g, '');
+                                    // Format untuk tampilan
+                                    this.displayValue = new Intl.NumberFormat('id-ID').format(raw);
+                                    // Kirim angka murni ke Livewire
+                                    @this.set('down_payment', raw);
+                                }
+                            }">
+                                <input type="text" x-model="displayValue"
+                                    x-on:input="updateValue($event.target.value)"
+                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                    placeholder="0">
+
+                            </div>
                             @error('down_payment')
                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                             @enderror
@@ -153,7 +168,8 @@
                     </div>
                     @if ($shipping_status !== 'bawa_sendiri')
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
+                            <label
+                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
                                 Supir / Driver</label>
                             <input wire:model="driver_name" type="text" placeholder="Misal: Bapak Anto"
                                 class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
@@ -195,15 +211,19 @@
                             <div class="w-full sm:w-32">
                                 <label
                                     class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qty</label>
-                                <input wire:model="items.{{ $index }}.quantity" type="number" min="1"
+                                <input wire:model.live="items.{{ $index }}.quantity" type="number"
+                                    min="1"
                                     class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                             </div>
                             <div class="w-full sm:w-48">
                                 <label
                                     class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Harga
                                     Satuan (Rp)</label>
-                                <input wire:model="items.{{ $index }}.price" type="number" min="0"
-                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                <input type="text" {{-- Gunakan ID unik dengan index agar tidak bentrok --}} id="display-price-{{ $index }}"
+                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                    placeholder="0" {{-- Saat load pertama kali, tampilkan harga yang sudah diformat --}}
+                                    wire:model.live="items.{{ $index }}.price"
+                                    oninput="updateItemPrice(this, {{ $index }})">
                             </div>
                             <button type="button" wire:click="removeItem({{ $index }})"
                                 class="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
@@ -250,6 +270,13 @@
                                     class="block w-full rounded-lg border border-red-300 px-3 py-1.5 text-sm text-right text-red-700 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20">
                             </div>
                         </div>
+                        @if ($payment_status == 'dp')
+                            <div class="flex justify-between w-full max-w-sm">
+                                <span class="text-gray-500 font-medium">Uang Muka (-):</span>
+                                <span class="text-gray-900 font-semibold">Rp
+                                    {{ number_format($this->down_payment, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
                         <div class="w-full max-w-sm border-t border-gray-300 my-1"></div>
                         <div class="flex justify-between w-full max-w-sm">
                             <span class="text-lg font-bold text-gray-900">GRAND TOTAL:</span>
@@ -534,6 +561,27 @@
 
 @script
     <script>
+        function updateItemPrice(el, index) {
+            // 1. Ambil angka murni (hapus semua karakter non-angka)
+            let rawValue = el.value.replace(/\D/g, '');
+
+            // 2. Format tampilan input dengan titik ribuan
+            if (rawValue) {
+                el.value = new Intl.NumberFormat('id-ID').format(rawValue);
+            } else {
+                el.value = '';
+            }
+
+            // 3. Update input hidden yang terhubung ke Livewire
+            let hiddenInput = document.getElementById('real-price-' + index);
+            hiddenInput.value = rawValue;
+
+            // 4. Trigger event agar Livewire mendeteksi perubahan (wire:model.live)
+            hiddenInput.dispatchEvent(new Event('input'));
+        }
+        // FORMAT RUPIAH input
+
+
         /**
          * Fetch base64-encoded raw ESC/P data and open via RawBT URI intent.
          * Compatible with: RawBT Print Service (Android), NokoPrint, etc.
