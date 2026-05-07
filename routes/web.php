@@ -14,6 +14,8 @@ use App\Http\Controllers\ReportController;
 use App\Livewire\BarangKeep;
 use App\Livewire\ExpenseIndex;
 use App\Livewire\ProductDetail;
+use App\Livewire\StockOpnameIndex;
+use App\Livewire\StockOpnameForm;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,6 +29,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/brands', BrandIndex::class)->name('brands.index');
     Route::get('/categories', CategoryIndex::class)->name('categories.index');
     Route::get('/barang-keep', BarangKeep::class)->name('barang-keep');
+    Route::get('/stock-opname', StockOpnameIndex::class)->name('stock-opname.index');
+    Route::get('/stock-opname/export', [App\Http\Controllers\StockOpnameController::class, 'export'])->name('stock-opname.export');
+    Route::get('/stock-opname/export-detail/{id}', [App\Http\Controllers\StockOpnameController::class, 'detailPdf'])->name('stock-opname.export.detail');
+    Route::get('/stock-opname/create', StockOpnameForm::class)->name('stock-opname.create');
     Route::get('/transactions/in', TransactionIn::class)->name('transactions.in');
     Route::get('/transactions/out', TransactionOut::class)->name('transactions.out');
     Route::get('/transactions/out/{id}/print', [App\Http\Controllers\TransactionOutController::class, 'print'])->name('transactions.out.print');

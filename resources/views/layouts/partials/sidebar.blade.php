@@ -84,6 +84,18 @@
                             <span class="nav-tooltip">Kategori</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('stock-opname.index') }}" data-tooltip="Stock Opname"
+                            class="ios-nav-item {{ request()->routeIs('stock-opname.*') ? 'bg-white/15 text-white shadow-sm' : 'text-indigo-100/90 hover:bg-white/10 hover:text-white' }} group flex gap-x-3 rounded-xl px-3 py-2.5 text-[14px] font-medium relative">
+                            <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <span class="sidebar-text">Stock Opname</span>
+                            <span class="nav-tooltip">Stock Opname</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
 
@@ -117,7 +129,7 @@
                             <span class="nav-tooltip">Barang Keluar</span>
                         </a>
                     </li>
-                    <li>
+                    {{-- <li>
                         <a href="{{ route('barang-keep') }}" data-tooltip="Barang Titipan"
                             class="ios-nav-item {{ request()->routeIs('barang-keep') ? 'bg-white/15 text-white shadow-sm' : 'text-indigo-100/90 hover:bg-white/10 hover:text-white' }} group flex gap-x-3 rounded-xl px-3 py-2.5 text-[14px] font-medium relative">
                             <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"
@@ -128,7 +140,7 @@
                             <span class="sidebar-text">Barang Titipan</span>
                             <span class="nav-tooltip">Barang Titipan</span>
                         </a>
-                    </li>
+                    </li> --}}
                     <li>
                         <a href="{{ route('sales.index') }}" data-tooltip="Penjualan"
                             class="ios-nav-item {{ request()->routeIs('sales.*') ? 'bg-white/15 text-white shadow-sm' : 'text-indigo-100/90 hover:bg-white/10 hover:text-white' }} group flex gap-x-3 rounded-xl px-3 py-2.5 text-[14px] font-medium relative">
