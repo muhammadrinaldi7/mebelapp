@@ -26,7 +26,7 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            max-width: 210mm;
+            max-width: 240mm;
         }
 
         /* Hide browser print overlay items */
@@ -332,13 +332,13 @@
                 <div class="line">Pengirim / Sales</div>
             </div>
         </div>
-
+        {{-- 
         <div
             style="text-align: center; margin-top: 10px; font-size: 10px; border-top: 1px dashed #000; padding-top: 5px;">
             Terima kasih atas kepercayaannya. Barang yang sudah dibeli tidak dapat ditukar/dikembalikan kecuali ada
             perjanjian.<br>
             *** Lembar Putih (Pembeli), Lembar Merah/Kuning (Pabrik/Arsip) ***
-        </div>
+        </div> --}}
     </div>
 </body>
 

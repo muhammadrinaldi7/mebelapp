@@ -118,6 +118,18 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('barang-keep') }}" data-tooltip="Barang Titipan"
+                            class="ios-nav-item {{ request()->routeIs('barang-keep') ? 'bg-white/15 text-white shadow-sm' : 'text-indigo-100/90 hover:bg-white/10 hover:text-white' }} group flex gap-x-3 rounded-xl px-3 py-2.5 text-[14px] font-medium relative">
+                            <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3" />
+                            </svg>
+                            <span class="sidebar-text">Barang Titipan</span>
+                            <span class="nav-tooltip">Barang Titipan</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('sales.index') }}" data-tooltip="Penjualan"
                             class="ios-nav-item {{ request()->routeIs('sales.*') ? 'bg-white/15 text-white shadow-sm' : 'text-indigo-100/90 hover:bg-white/10 hover:text-white' }} group flex gap-x-3 rounded-xl px-3 py-2.5 text-[14px] font-medium relative">
                             <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"

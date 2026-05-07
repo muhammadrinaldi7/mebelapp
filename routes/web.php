@@ -11,6 +11,7 @@ use App\Livewire\Report;
 use App\Livewire\UserManagement;
 use App\Livewire\RoleManagement;
 use App\Http\Controllers\ReportController;
+use App\Livewire\BarangKeep;
 use App\Livewire\ExpenseIndex;
 use App\Livewire\ProductDetail;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/product/{id}', ProductDetail::class)->name('products.show');
     Route::get('/brands', BrandIndex::class)->name('brands.index');
     Route::get('/categories', CategoryIndex::class)->name('categories.index');
+    Route::get('/barang-keep', BarangKeep::class)->name('barang-keep');
     Route::get('/transactions/in', TransactionIn::class)->name('transactions.in');
     Route::get('/transactions/out', TransactionOut::class)->name('transactions.out');
     Route::get('/transactions/out/{id}/print', [App\Http\Controllers\TransactionOutController::class, 'print'])->name('transactions.out.print');
