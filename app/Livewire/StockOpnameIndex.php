@@ -3,9 +3,11 @@
 namespace App\Livewire;
 
 use App\Models\StockOpname;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
 class StockOpnameIndex extends Component
 {
     use WithPagination;
@@ -30,7 +32,7 @@ class StockOpnameIndex extends Component
     {
         $opnames = StockOpname::with('user')
             ->where('reference_code', 'like', '%' . $this->search . '%')
-            ->orWhereHas('user', function($q) {
+            ->orWhereHas('user', function ($q) {
                 $q->where('name', 'like', '%' . $this->search . '%');
             })
             ->latest('opname_date')
@@ -38,6 +40,6 @@ class StockOpnameIndex extends Component
 
         return view('livewire.stock-opname-index', [
             'opnames' => $opnames,
-        ])->layout('layouts.app');
+        ]);
     }
 }

@@ -57,6 +57,20 @@
                         Produk tidak ditemukan.
                     </div>
                 @endif
+                
+                <div class="mt-4 flex flex-col gap-2">
+                    <div class="relative flex items-center py-2">
+                        <div class="flex-grow border-t border-gray-200"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-wider font-medium">Atau</span>
+                        <div class="flex-grow border-t border-gray-200"></div>
+                    </div>
+                    <button wire:click="loadAllProducts" type="button" class="w-full inline-flex justify-center items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
+                        <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Muat Semua Produk
+                    </button>
+                </div>
 
                 <div class="mt-6 border-t border-gray-100 pt-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan Umum Opname</label>

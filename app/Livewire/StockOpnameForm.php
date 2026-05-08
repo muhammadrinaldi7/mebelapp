@@ -6,17 +6,21 @@ use App\Models\Product;
 use App\Models\StockOpname;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Layout;
 
+#[Layout('layouts.app')]
 class StockOpnameForm extends Component
 {
     public $searchProduct = '';
     public $products = []; // Search results
-    
+
     public $opnameItems = []; // Selected items for opname
     public $notes = '';
-    
+
     public function updatedSearchProduct()
     {
         if (strlen($this->searchProduct) >= 2) {
@@ -56,6 +60,34 @@ class StockOpnameForm extends Component
         $this->products = [];
     }
 
+    public function loadAllProducts()
+    {
+        $allProducts = Product::orderBy('name')->get();
+        $existingIds = collect($this->opnameItems)->pluck('product_id')->toArray();
+
+        $countAdded = 0;
+        foreach ($allProducts as $product) {
+            if (!in_array($product->id, $existingIds)) {
+                $this->opnameItems[] = [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'system_stock' => $product->current_stock,
+                    'physical_stock' => $product->current_stock,
+                    'difference' => 0,
+                    'notes' => '',
+                ];
+                $countAdded++;
+            }
+        }
+
+        if ($countAdded > 0) {
+            $this->dispatch('notify', type: 'success', message: $countAdded . ' produk berhasil dimuat.');
+        } else {
+            $this->dispatch('notify', type: 'info', message: 'Semua produk sudah ada di daftar.');
+        }
+    }
+
     public function removeProduct($index)
     {
         unset($this->opnameItems[$index]);
@@ -91,7 +123,7 @@ class StockOpnameForm extends Component
             $opname = StockOpname::create([
                 'reference_code' => $refCode,
                 'opname_date' => date('Y-m-d'),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'status' => 'completed',
                 'notes' => $this->notes,
             ]);
@@ -119,7 +151,7 @@ class StockOpnameForm extends Component
                     // Difference > 0 means IN
                     if (!$hasIn) {
                         $trxIn = Transaction::create([
-                            'user_id' => auth()->id(),
+                            'user_id' => Auth::id(),
                             'type' => 'in',
                             'reference_code' => 'ADJ-IN-' . $refCode,
                             'transaction_date' => date('Y-m-d'),
@@ -128,19 +160,18 @@ class StockOpnameForm extends Component
                         $inTransactionId = $trxIn->id;
                         $hasIn = true;
                     }
-                    
+
                     TransactionDetail::create([
                         'transaction_id' => $inTransactionId,
                         'product_id' => $product->id,
                         'quantity' => $item['difference'],
                         'price_at_transaction' => $product->base_price, // Or 0
                     ]);
-
                 } elseif ($item['difference'] < 0) {
                     // Difference < 0 means OUT
                     if (!$hasOut) {
                         $trxOut = Transaction::create([
-                            'user_id' => auth()->id(),
+                            'user_id' => Auth::id(),
                             'type' => 'out',
                             'reference_code' => 'ADJ-OUT-' . $refCode,
                             'transaction_date' => date('Y-m-d'),
@@ -149,7 +180,7 @@ class StockOpnameForm extends Component
                         $outTransactionId = $trxOut->id;
                         $hasOut = true;
                     }
-                    
+
                     TransactionDetail::create([
                         'transaction_id' => $outTransactionId,
                         'product_id' => $product->id,
@@ -163,16 +194,15 @@ class StockOpnameForm extends Component
 
             session()->flash('success', 'Stock Opname berhasil diselesaikan!');
             return redirect()->route('stock-opname.index');
-            
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Stock Opname Error: ' . $e->getMessage());
+            Log::error('Stock Opname Error: ' . $e->getMessage());
             $this->dispatch('notify', type: 'error', message: 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
     public function render()
     {
-        return view('livewire.stock-opname-form')->layout('layouts.app');
+        return view('livewire.stock-opname-form');
     }
 }
