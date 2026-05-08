@@ -91,7 +91,7 @@ class TransactionOut extends Component
 
     public function openEditForm($id)
     {
-        if (!Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can('edit-barang-keluar')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -118,7 +118,7 @@ class TransactionOut extends Component
 
     public function updateTransaction()
     {
-        if (!Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can('edit-barang-keluar')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -147,7 +147,18 @@ class TransactionOut extends Component
             }
         }
 
-        DB::transaction(function () {
+        $existingDetailIds = TransactionDetail::where('transaction_id', $this->edit_transaction_id)->pluck('id')->toArray();
+        $keptDetailIds = collect($this->edit_items)->pluck('id')->filter()->toArray();
+        $deletedDetailIds = array_diff($existingDetailIds, $keptDetailIds);
+
+        DB::transaction(function () use ($deletedDetailIds) {
+            foreach ($deletedDetailIds as $deletedId) {
+                $detail = TransactionDetail::find($deletedId);
+                if ($detail) {
+                    $detail->delete(); // Observer will increment stock
+                }
+            }
+
             foreach ($this->edit_items as $item) {
                 $detail = TransactionDetail::find($item['id']);
                 if ($detail) {
@@ -170,6 +181,16 @@ class TransactionOut extends Component
 
         $this->showEditForm = false;
         $this->dispatch('notify', type: 'success', message: 'Transaksi barang keluar berhasil diupdate.');
+    }
+
+    public function removeEditItem($index)
+    {
+        if (count($this->edit_items) > 1) {
+            unset($this->edit_items[$index]);
+            $this->edit_items = array_values($this->edit_items);
+        } else {
+            $this->dispatch('notify', type: 'error', message: 'Transaksi minimal harus memiliki 1 item.');
+        }
     }
 
     public function addItem()
