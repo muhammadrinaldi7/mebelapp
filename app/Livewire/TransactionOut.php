@@ -122,26 +122,44 @@ class TransactionOut extends Component
             abort(403, 'Akses ditolak.');
         }
 
-        $this->validate([
+        $rules = [
             'edit_reference_code' => 'required|string|max:255',
             'edit_transaction_date' => 'required|date',
             'edit_items.*.quantity' => 'required|integer|min:1',
-        ]);
+        ];
 
-        // Validate stock availability for qty increases
+        // Ensure new items have a selected product
+        foreach ($this->edit_items as $index => $item) {
+            if (empty($item['id'])) {
+                $rules["edit_items.{$index}.product_id"] = 'required|exists:products,id';
+            }
+        }
+
+        $this->validate($rules);
+
+        // Validate stock availability for qty increases and new items
         foreach ($this->edit_items as $item) {
-            $detail = TransactionDetail::find($item['id']);
-            if ($detail) {
-                $oldQty = $detail->quantity;
-                $newQty = $item['quantity'];
-                $diff = $newQty - $oldQty;
+            if (empty($item['id'])) {
+                // New item added, check if stock is sufficient for the whole quantity
+                $product = Product::find($item['product_id']);
+                if ($product && $product->current_stock < $item['quantity']) {
+                    $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan: {$item['quantity']}");
+                    return;
+                }
+            } else {
+                $detail = TransactionDetail::find($item['id']);
+                if ($detail) {
+                    $oldQty = $detail->quantity;
+                    $newQty = $item['quantity'];
+                    $diff = $newQty - $oldQty;
 
-                if ($diff > 0) {
-                    // More items going out, check if stock is sufficient
-                    $product = Product::find($detail->product_id);
-                    if ($product && $product->current_stock < $diff) {
-                        $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan tambahan: {$diff}");
-                        return;
+                    if ($diff > 0) {
+                        // More items going out, check if stock is sufficient
+                        $product = Product::find($detail->product_id);
+                        if ($product && $product->current_stock < $diff) {
+                            $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan tambahan: {$diff}");
+                            return;
+                        }
                     }
                 }
             }
@@ -160,12 +178,22 @@ class TransactionOut extends Component
             }
 
             foreach ($this->edit_items as $item) {
-                $detail = TransactionDetail::find($item['id']);
-                if ($detail) {
-                    // Observer `updating` will handle stock adjustment automatically
-                    $detail->update([
+                if (empty($item['id'])) {
+                    // Create new detail
+                    TransactionDetail::create([
+                        'transaction_id' => $this->edit_transaction_id,
+                        'product_id' => $item['product_id'],
                         'quantity' => $item['quantity'],
+                        'price_at_transaction' => 0, // Outbound doesn't track selling price here
                     ]);
+                } else {
+                    $detail = TransactionDetail::find($item['id']);
+                    if ($detail) {
+                        // Observer `updating` will handle stock adjustment automatically
+                        $detail->update([
+                            'quantity' => $item['quantity'],
+                        ]);
+                    }
                 }
             }
 
@@ -191,6 +219,18 @@ class TransactionOut extends Component
         } else {
             $this->dispatch('notify', type: 'error', message: 'Transaksi minimal harus memiliki 1 item.');
         }
+    }
+
+    public function addEditItem()
+    {
+        $this->edit_items[] = [
+            'id' => null,
+            'product_id' => '',
+            'product_name' => '',
+            'satuan' => '-',
+            'current_stock' => 0,
+            'quantity' => 1,
+        ];
     }
 
     public function addItem()

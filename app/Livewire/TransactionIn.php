@@ -140,6 +140,13 @@ class TransactionIn extends Component
             'edit_items.*.quantity' => 'required|integer|min:1',
         ];
 
+        // Ensure new items have a selected product
+        foreach ($this->edit_items as $index => $item) {
+            if (empty($item['id'])) {
+                $rules["edit_items.{$index}.product_id"] = 'required|exists:products,id';
+            }
+        }
+
         if (Auth::user()->hasRole('admin')) {
             $rules['edit_items.*.price'] = 'required|numeric|min:0';
         }
@@ -192,21 +199,34 @@ class TransactionIn extends Component
             }
 
             foreach ($this->edit_items as $item) {
-                $detail = TransactionDetail::find($item['id']);
-                if ($detail) {
-                    $updateData = [
+                if (empty($item['id'])) {
+                    // Create new detail
+                    $price = Auth::user()->hasRole('admin') && isset($item['price']) ? $item['price'] : 0;
+                    $detail = TransactionDetail::create([
+                        'transaction_id' => $this->edit_transaction_id,
+                        'product_id' => $item['product_id'],
                         'quantity' => $item['quantity'],
-                    ];
-                    
-                    if (Auth::user()->hasRole('admin') && isset($item['price'])) {
-                        $updateData['price_at_transaction'] = $item['price'];
-                        $totalAmount += ($item['quantity'] * $item['price']);
-                    } else {
-                        $totalAmount += ($item['quantity'] * $detail->price_at_transaction);
-                    }
+                        'price_at_transaction' => $price,
+                    ]);
+                    $totalAmount += ($item['quantity'] * $price);
+                } else {
+                    // Update existing detail
+                    $detail = TransactionDetail::find($item['id']);
+                    if ($detail) {
+                        $updateData = [
+                            'quantity' => $item['quantity'],
+                        ];
+                        
+                        if (Auth::user()->hasRole('admin') && isset($item['price'])) {
+                            $updateData['price_at_transaction'] = $item['price'];
+                            $totalAmount += ($item['quantity'] * $item['price']);
+                        } else {
+                            $totalAmount += ($item['quantity'] * $detail->price_at_transaction);
+                        }
 
-                    // Observer `updating` will handle stock adjustment automatically
-                    $detail->update($updateData);
+                        // Observer `updating` will handle stock adjustment automatically
+                        $detail->update($updateData);
+                    }
                 }
             }
 
@@ -233,6 +253,19 @@ class TransactionIn extends Component
         } else {
             $this->dispatch('notify', type: 'error', message: 'Transaksi minimal harus memiliki 1 item.');
         }
+    }
+
+    public function addEditItem()
+    {
+        $this->edit_items[] = [
+            'id' => null,
+            'product_id' => '',
+            'sku' => '-',
+            'product_name' => '',
+            'satuan' => '-',
+            'quantity' => 1,
+            'price' => 0,
+        ];
     }
 
     public function confirmDelete($id)
