@@ -426,9 +426,24 @@
                                             <tr>
                                                 <td class="px-4 py-3 text-gray-500">{{ $index + 1 }}</td>
                                                 <td class="px-4 py-3">
-                                                    <div class="font-medium text-gray-900 line-clamp-2 max-w-[250px]" title="{{ $item['product_name'] }}">
-                                                        {{ $item['product_name'] }}
-                                                    </div>
+                                                    @if(empty($item['id']))
+                                                        <select wire:model.live="edit_items.{{ $index }}.product_id"
+                                                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600">
+                                                            <option value="">Pilih Produk...</option>
+                                                            @foreach ($products as $product)
+                                                                <option value="{{ $product->id }}">
+                                                                    {{ $product->sku }} - {{ $product->name }} (Stok: {{ $product->current_stock }})
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error("edit_items.{$index}.product_id")
+                                                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                                                        @enderror
+                                                    @else
+                                                        <div class="font-medium text-gray-900 line-clamp-2 max-w-[250px]" title="{{ $item['product_name'] }}">
+                                                            {{ $item['product_name'] }}
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td class="px-4 py-3 text-center text-gray-600">
                                                     {{ $item['satuan'] }}</td>
@@ -460,6 +475,11 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <button type="button" wire:click="addEditItem"
+                                class="text-sm text-orange-600 hover:text-orange-500 font-medium inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Tambah Item Baru
+                            </button>
                         </div>
                         
                         <!-- Footer -->
