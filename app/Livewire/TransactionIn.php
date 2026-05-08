@@ -103,7 +103,7 @@ class TransactionIn extends Component
 
     public function openEditForm($id)
     {
-        if (!Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can('edit-barang-masuk')) {
             abort(403, 'Akses ditolak.');
         }
 
@@ -130,29 +130,83 @@ class TransactionIn extends Component
 
     public function updateTransaction()
     {
-        if (!Auth::user()->hasRole('admin')) {
+        if (!Auth::user()->can('edit-barang-masuk')) {
             abort(403, 'Akses ditolak.');
         }
 
-        $this->validate([
+        $rules = [
             'edit_reference_code' => 'required|string|max:255',
             'edit_transaction_date' => 'required|date',
             'edit_items.*.quantity' => 'required|integer|min:1',
-            'edit_items.*.price' => 'required|numeric|min:0',
-        ]);
+        ];
 
-        DB::transaction(function () {
+        if (Auth::user()->hasRole('admin')) {
+            $rules['edit_items.*.price'] = 'required|numeric|min:0';
+        }
+
+        $this->validate($rules);
+
+        // Validate stock availability for qty decreases (since it's Barang Masuk, decreasing qty decreases stock)
+        foreach ($this->edit_items as $item) {
+            $detail = TransactionDetail::find($item['id']);
+            if ($detail) {
+                $oldQty = $detail->quantity;
+                $newQty = $item['quantity'];
+                $diff = $newQty - $oldQty;
+
+                if ($diff < 0) {
+                    $reduction = abs($diff);
+                    $product = \App\Models\Product::find($detail->product_id);
+                    if ($product && $product->current_stock < $reduction) {
+                        $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi untuk dikurangi. Tersedia: {$product->current_stock}, akan dikurangi: {$reduction}");
+                        return;
+                    }
+                }
+            }
+        }
+
+        $existingDetailIds = TransactionDetail::where('transaction_id', $this->edit_transaction_id)->pluck('id')->toArray();
+        $keptDetailIds = collect($this->edit_items)->pluck('id')->filter()->toArray();
+        $deletedDetailIds = array_diff($existingDetailIds, $keptDetailIds);
+
+        // Validate stock availability for deleted items
+        foreach ($deletedDetailIds as $deletedId) {
+            $detail = TransactionDetail::find($deletedId);
+            if ($detail) {
+                $product = \App\Models\Product::find($detail->product_id);
+                if ($product && $product->current_stock < $detail->quantity) {
+                    $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi untuk dihapus. Tersedia: {$product->current_stock}, akan dikurangi: {$detail->quantity}");
+                    return;
+                }
+            }
+        }
+
+        DB::transaction(function () use ($deletedDetailIds) {
             $totalAmount = 0;
+
+            foreach ($deletedDetailIds as $deletedId) {
+                $detail = TransactionDetail::find($deletedId);
+                if ($detail) {
+                    $detail->delete();
+                }
+            }
 
             foreach ($this->edit_items as $item) {
                 $detail = TransactionDetail::find($item['id']);
                 if ($detail) {
-                    // Observer `updating` will handle stock adjustment automatically
-                    $detail->update([
+                    $updateData = [
                         'quantity' => $item['quantity'],
-                        'price_at_transaction' => $item['price'],
-                    ]);
-                    $totalAmount += ($item['quantity'] * $item['price']);
+                    ];
+                    
+                    if (Auth::user()->hasRole('admin') && isset($item['price'])) {
+                        $updateData['price_at_transaction'] = $item['price'];
+                        $totalAmount += ($item['quantity'] * $item['price']);
+                    } else {
+                        $totalAmount += ($item['quantity'] * $detail->price_at_transaction);
+                    }
+
+                    // Observer `updating` will handle stock adjustment automatically
+                    $detail->update($updateData);
                 }
             }
 
@@ -171,6 +225,16 @@ class TransactionIn extends Component
         $this->dispatch('notify', type: 'success', message: 'Transaksi barang masuk berhasil diupdate.');
     }
 
+    public function removeEditItem($index)
+    {
+        if (count($this->edit_items) > 1) {
+            unset($this->edit_items[$index]);
+            $this->edit_items = array_values($this->edit_items);
+        } else {
+            $this->dispatch('notify', type: 'error', message: 'Transaksi minimal harus memiliki 1 item.');
+        }
+    }
+
     public function confirmDelete($id)
     {
         $this->delete_transaction_id = $id;
@@ -184,6 +248,17 @@ class TransactionIn extends Component
         }
 
         $transaction = Transaction::with('details')->findOrFail($this->delete_transaction_id);
+
+        // Validate stock availability before deleting (deleting Barang Masuk reduces stock)
+        foreach ($transaction->details as $detail) {
+            $product = \App\Models\Product::find($detail->product_id);
+            if ($product && $product->current_stock < $detail->quantity) {
+                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi untuk dihapus. Tersedia: {$product->current_stock}, akan dikurangi: {$detail->quantity}");
+                $this->showDeleteConfirm = false;
+                $this->delete_transaction_id = null;
+                return;
+            }
+        }
 
         DB::transaction(function () use ($transaction) {
             // Delete details first — observer will reverse stock automatically
