@@ -48,7 +48,7 @@
                     @can('lihat-hargaBeli')
                         <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Harga Beli</th>
                     @endcan
-                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Harga Jual</th>
+                    {{-- <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Harga Jual</th> --}}
                     <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Stok</th>
                     <th class="relative py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900">Aksi</th>
                 </tr>
@@ -69,8 +69,8 @@
                             <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-500">Rp
                                 {{ number_format($product->base_price, 0, ',', '.') }}</td>
                         @endcan
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-500">Rp
-                            {{ number_format($product->selling_price, 0, ',', '.') }}</td>
+                        {{-- <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-500">Rp
+                            {{ number_format($product->selling_price, 0, ',', '.') }}</td> --}}
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-right">
                             <span
                                 class="inline-flex items-center rounded-md {{ $product->current_stock > 5 ? 'bg-green-50 text-green-700 ring-green-600/20' : ($product->current_stock > 0 ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' : 'bg-red-50 text-red-700 ring-red-600/10') }} px-2 py-1 text-xs font-medium ring-1 ring-inset">

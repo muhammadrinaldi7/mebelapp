@@ -57,16 +57,19 @@
                         Produk tidak ditemukan.
                     </div>
                 @endif
-                
+
                 <div class="mt-4 flex flex-col gap-2">
                     <div class="relative flex items-center py-2">
                         <div class="flex-grow border-t border-gray-200"></div>
-                        <span class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-wider font-medium">Atau</span>
+                        <span
+                            class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-wider font-medium">Atau</span>
                         <div class="flex-grow border-t border-gray-200"></div>
                     </div>
-                    <button wire:click="loadAllProducts" type="button" class="w-full inline-flex justify-center items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
+                    <button wire:click="loadAllProducts" type="button"
+                        class="w-full inline-flex justify-center items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
                         <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                         </svg>
                         Muat Semua Produk
                     </button>
@@ -133,7 +136,7 @@
                                             <input type="number"
                                                 wire:change="updatePhysicalStock({{ $index }}, $event.target.value)"
                                                 value="{{ $item['physical_stock'] }}"
-                                                class="block w-full rounded-lg border-gray-300 text-center font-semibold focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                                class="block w-full rounded-lg p-2 border border-gray-300 text-center font-semibold focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-center font-bold">
                                             @if ($item['difference'] > 0)

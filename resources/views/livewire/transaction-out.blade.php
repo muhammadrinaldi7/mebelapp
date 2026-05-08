@@ -164,7 +164,7 @@
                     <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Kode</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Tanggal</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">User</th>
-                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Total Item</th>
                     <th class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Aksi</th>
                 </tr>
             </thead>
@@ -180,9 +180,7 @@
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $trx->user->name ?? '-' }}
                         </td>
                         <td class="px-3 py-4 text-sm text-gray-500">
-                            @foreach ($trx->details as $detail)
-                                <div>{{ $detail->product->name ?? '-' }} × {{ $detail->quantity }}</div>
-                            @endforeach
+                            {{ $trx->details->sum('quantity') }}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-center">
                             <div class="flex items-center justify-center gap-2">
