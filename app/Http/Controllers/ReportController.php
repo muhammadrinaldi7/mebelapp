@@ -22,7 +22,7 @@ class ReportController extends Controller
         $search = $request->get('search');
         $from = $request->get('from');
         $to = $request->get('to');
-        
+
         $data = [
             'tab' => $tab,
             'dateFrom' => $from,
@@ -41,8 +41,7 @@ class ReportController extends Controller
                 ->latest('transaction_date')
                 ->get();
             $data['reportTitle'] = 'Log Transaksi';
-        }
-        elseif ($tab === 'stock') {
+        } elseif ($tab === 'stock') {
             $cid = $request->get('cid');
             $bid = $request->get('bid');
             $data['products'] = Product::with('category', 'brand')
@@ -51,12 +50,11 @@ class ReportController extends Controller
                 ->when($search, fn($q) => $q->where('name', 'like', '%' . $search . '%')->orWhere('sku', 'like', '%' . $search . '%'))
                 ->orderBy('current_stock', 'asc')
                 ->get();
-            $data['reportTitle'] = 'Stok & Valuasi Aset';
-        }
-        elseif ($tab === 'movement') {
+            $data['reportTitle'] = 'Stok Barang';
+        } elseif ($tab === 'movement') {
             $mt = $request->get('mt', 'all');
             $data['mutations'] = TransactionDetail::with('product', 'transaction')
-                ->whereHas('transaction', function($q) use ($mt, $from, $to) {
+                ->whereHas('transaction', function ($q) use ($mt, $from, $to) {
                     $q->whereIn('type', ['in', 'out', 'sale'])
                         ->when($mt !== 'all', fn($q2) => $q2->where('type', $mt))
                         ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
@@ -68,20 +66,18 @@ class ReportController extends Controller
                 ->select('transaction_details.*')
                 ->get();
             $data['reportTitle'] = 'Mutasi Barang';
-        }
-        elseif ($tab === 'profit') {
+        } elseif ($tab === 'profit') {
             $data['profitDetails'] = TransactionDetail::with('product', 'transaction')
-                ->whereHas('transaction', function($q) use ($from, $to) {
+                ->whereHas('transaction', function ($q) use ($from, $to) {
                     $q->where('type', 'sale')
-                      ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
-                      ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to));
+                        ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
+                        ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to));
                 })
                 ->when($search, fn($q) => $q->whereHas('product', fn($q2) => $q2->where('name', 'like', '%' . $search . '%')->orWhere('sku', 'like', '%' . $search . '%')))
                 ->latest('created_at')
                 ->get();
             $data['reportTitle'] = 'Keuntungan Kotor Penjualan';
-        }
-        elseif ($tab === 'buy_price') {
+        } elseif ($tab === 'buy_price') {
             $pid = $request->get('pid');
             $data['priceHistory'] = collect();
             $data['reportTitle'] = 'Analisa Harga Beli';
@@ -89,9 +85,11 @@ class ReportController extends Controller
             if ($pid) {
                 $history = TransactionDetail::with('transaction', 'product')
                     ->where('product_id', $pid)
-                    ->whereHas('transaction', fn($q) => $q->where('type', 'in')
-                        ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
-                        ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to))
+                    ->whereHas(
+                        'transaction',
+                        fn($q) => $q->where('type', 'in')
+                            ->when($from, fn($q2) => $q2->whereDate('transaction_date', '>=', $from))
+                            ->when($to, fn($q2) => $q2->whereDate('transaction_date', '<=', $to))
                     )
                     ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
                     ->orderBy('transactions.transaction_date', 'asc')
@@ -102,14 +100,13 @@ class ReportController extends Controller
                     $data['reportTitle'] = 'Analisa Harga Beli Produk: ' . $history->first()->product->name;
                 }
             }
-        }
-        elseif ($tab === 'expenses') {
+        } elseif ($tab === 'expenses') {
             $data['expenses'] = \App\Models\Expense::with('user')
                 ->when($from, fn($q) => $q->whereDate('expense_date', '>=', $from))
                 ->when($to, fn($q) => $q->whereDate('expense_date', '<=', $to))
-                ->when($search, function($q) use ($search) {
+                ->when($search, function ($q) use ($search) {
                     $q->where('category', 'like', '%' . $search . '%')
-                      ->orWhere('notes', 'like', '%' . $search . '%');
+                        ->orWhere('notes', 'like', '%' . $search . '%');
                 })
                 ->latest('expense_date')
                 ->get();

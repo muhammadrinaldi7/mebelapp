@@ -205,8 +205,8 @@
                     {{-- <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Qty</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Satuan</th> --}}
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Total Item</th>
                     @if (Auth::user()->hasRole('admin'))
-                        <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Total</th>
                         <th class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Aksi</th>
                     @endif
                     @can('hapus-barang-masuk')
@@ -247,14 +247,15 @@
                         </td> --}}
 
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-500">
-                            @if ($trx->total_amount == 0)
+                            {{-- @if ($trx->total_amount == 0)
                                 <span
                                     class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
                                     ⚠️ Belum Ada Harga
                                 </span>
                             @else
                                 Rp {{ number_format($trx->total_amount, 0, ',', '.') }}
-                            @endif
+                            @endif --}}
+                            {{ $trx->details->sum('quantity') }}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-center">
                             @can('edit-barang-masuk')
