@@ -77,14 +77,25 @@
                                     init() {
                                         const pid = @js($item['product_id']);
                                         if (pid) {
-                                            const found = @js($products->map(fn($p) => ['id' => $p->id, 'label' => $p->sku . ' - ' . $p->name])->toArray()).find(p => p.id == pid);
+                                            const found = @js($products->map(fn($p) => [
+                                                'id' => $p->id,
+                                                'sku' => $p->sku,
+                                                'name' => $p->name,
+                                                'label' => '[' . $p->sku . '] ' . $p->name
+                                            ])->toArray()).find(p => p.id == pid);
                                             if (found) this.selectedLabel = found.label;
                                         }
                                     },
                                     get filtered() {
-                                        if (!this.search) return @js($products->map(fn($p) => ['id' => $p->id, 'label' => $p->sku . ' - ' . $p->name])->toArray());
+                                        const items = @js($products->map(fn($p) => [
+                                            'id' => $p->id,
+                                            'sku' => $p->sku,
+                                            'name' => $p->name,
+                                            'label' => '[' . $p->sku . '] ' . $p->name
+                                        ])->toArray());
+                                        if (!this.search) return items;
                                         const s = this.search.toLowerCase();
-                                        return @js($products->map(fn($p) => ['id' => $p->id, 'label' => $p->sku . ' - ' . $p->name])->toArray()).filter(p => p.label.toLowerCase().includes(s));
+                                        return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
                                     },
                                     select(product) {
                                         this.selectedLabel = product.label;
@@ -101,7 +112,7 @@
                                     <div class="relative">
                                         <input type="text" x-show="open || !selectedLabel" x-ref="searchInput"
                                             x-model="search" @focus="open = true" @click="open = true"
-                                            placeholder="Cari produk..."
+                                            placeholder="Cari nama atau SKU produk..."
                                             class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm" />
                                         <button type="button" x-show="!open && selectedLabel"
                                             @click="open = true; $nextTick(() => $refs.searchInput.focus())"
@@ -122,13 +133,15 @@
                                         class="absolute z-50 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
                                         <template x-for="product in filtered" :key="product.id">
                                             <button type="button" @click="select(product)"
-                                                class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">
-                                                <span
-                                                    x-text="product.label.length > 50 ? product.label.substring(0, 50) + '...' : product.label"></span>
+                                                class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-indigo-50 hover:text-indigo-700 transition-colors last:border-0">
+                                                <div class="text-sm font-semibold" x-text="product.name"></div>
+                                                <div class="text-xs text-gray-500 mt-0.5">
+                                                    <span x-text="product.sku" class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
+                                                </div>
                                             </button>
                                         </template>
                                         <div x-show="filtered.length === 0"
-                                            class="px-3 py-2 text-sm text-gray-400 italic">Produk tidak ditemukan
+                                            class="px-3 py-3 text-sm text-gray-400 italic text-center">Produk tidak ditemukan
                                         </div>
                                     </div>
                                 </div>
