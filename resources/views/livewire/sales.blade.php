@@ -198,15 +198,88 @@
                             <div class="flex-1 w-full">
                                 <label
                                     class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Produk</label>
-                                <select wire:model.live="items.{{ $index }}.product_id"
-                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                                    <option value="">-- Pilih --</option>
-                                    @foreach ($products as $product)
-                                        <option value="{{ $product->id }}">{{ $product->name }} (stok:
-                                            {{ $product->current_stock }}) - Rp
-                                            {{ number_format($product->selling_price, 0, ',', '.') }}</option>
-                                    @endforeach
-                                </select>
+                                <div x-data="{
+                                    open: false,
+                                    search: '',
+                                    selectedLabel: '',
+                                    init() {
+                                        const pid = @js($item['product_id']);
+                                        if (pid) {
+                                            const found = @js($products->map(fn($p) => [
+                                                'id' => $p->id,
+                                                'sku' => $p->sku,
+                                                'name' => $p->name,
+                                                'stock' => $p->current_stock,
+                                                'price' => number_format($p->selling_price, 0, ',', '.'),
+                                                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'
+                                            ])->toArray()).find(p => p.id == pid);
+                                            if (found) this.selectedLabel = found.label;
+                                        }
+                                    },
+                                    get filtered() {
+                                        const items = @js($products->map(fn($p) => [
+                                            'id' => $p->id,
+                                            'sku' => $p->sku,
+                                            'name' => $p->name,
+                                            'stock' => $p->current_stock,
+                                            'price' => number_format($p->selling_price, 0, ',', '.'),
+                                            'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'
+                                        ])->toArray());
+                                        if (!this.search) return items;
+                                        const s = this.search.toLowerCase();
+                                        return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
+                                    },
+                                    select(product) {
+                                        this.selectedLabel = product.label;
+                                        this.search = '';
+                                        this.open = false;
+                                        $wire.set('items.{{ $index }}.product_id', product.id);
+                                    },
+                                    clear() {
+                                        this.selectedLabel = '';
+                                        this.search = '';
+                                        $wire.set('items.{{ $index }}.product_id', '');
+                                    }
+                                }" @click.outside="open = false" class="relative">
+                                    <div class="relative">
+                                        <input type="text" x-show="open || !selectedLabel" x-ref="searchInput"
+                                            x-model="search" @focus="open = true" @click="open = true"
+                                            placeholder="Cari nama atau SKU produk..."
+                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                        <button type="button" x-show="!open && selectedLabel"
+                                            @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 shadow-sm hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white">
+                                            <span
+                                                x-text="selectedLabel.length > 50 ? selectedLabel.substring(0, 50) + '...' : selectedLabel"
+                                                class="truncate block"></span>
+                                        </button>
+                                        <button type="button" x-show="selectedLabel" @click="clear()"
+                                            class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div x-show="open" x-cloak
+                                        class="absolute z-50 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
+                                        <template x-for="product in filtered" :key="product.id">
+                                            <button type="button" @click="select(product)"
+                                                class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-blue-50 focus:bg-blue-50 transition-colors last:border-0">
+                                                <div class="text-sm font-semibold text-gray-900" x-text="product.name"></div>
+                                                <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                    <span x-text="product.sku" class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
+                                                    <span>Stok: <span x-text="product.stock" class="font-medium text-gray-700"></span></span>
+                                                    <span class="text-gray-300">|</span>
+                                                    <span class="font-medium text-blue-600">Rp <span x-text="product.price"></span></span>
+                                                </div>
+                                            </button>
+                                        </template>
+                                        <div x-show="filtered.length === 0"
+                                            class="px-3 py-3 text-sm text-gray-400 italic text-center">Produk tidak ditemukan
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="w-full sm:w-32">
                                 <label
