@@ -112,58 +112,8 @@
                     </div>
 
                     <div class="col-span-full mt-2">
-                        <h4 class="text-sm font-semibold text-gray-800 border-b pb-2 mb-3 mt-4"># Pembayaran &
-                            Pengiriman</h4>
+                        <h4 class="text-sm font-semibold text-gray-800 border-b pb-2 mb-3 mt-4"># Pengiriman</h4>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Status
-                            Pembayaran</label>
-                        <select wire:model.live="payment_status"
-                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                            <option value="lunas">Lunas (Cash)</option>
-                            <option value="dp">Hutang / DP (Cicilan)</option>
-                            <option value="belum_dibayar">Belum Dibayar</option>
-                        </select>
-                    </div>
-                    @if ($payment_status === 'dp')
-                        <div>
-                            <label
-                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nominal
-                                DP / Masuk (Rp)</label>
-                            <div x-data="{
-                                raw: $wire.entangle('down_payment'),
-                                displayValue: '',
-                                init() {
-                                    this.$watch('raw', value => {
-                                        if (value !== undefined && value !== null && value !== '') {
-                                            this.displayValue = new Intl.NumberFormat('id-ID').format(value);
-                                        } else {
-                                            this.displayValue = '';
-                                        }
-                                    });
-                                    if (this.raw !== undefined && this.raw !== null && this.raw !== '') {
-                                        this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
-                                    }
-                                },
-                                updateValue(val) {
-                                    let rawVal = val.toString().replace(/\D/g, '');
-                                    this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
-                                    this.raw = rawVal;
-                                }
-                            }">
-                                <input type="text" x-model="displayValue"
-                                    x-on:input="updateValue($event.target.value)"
-                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                    placeholder="0">
-                            </div>
-                            @error('down_payment')
-                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    @else
-                        <div class="hidden lg:block"></div>
-                    @endif
-
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Armada /
                             Pengiriman</label>
@@ -177,8 +127,7 @@
                     </div>
                     @if ($shipping_status !== 'bawa_sendiri')
                         <div>
-                            <label
-                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
                                 Supir / Driver</label>
                             <input wire:model="driver_name" type="text" placeholder="Misal: Bapak Anto"
                                 class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
@@ -214,26 +163,38 @@
                                     init() {
                                         const pid = @js($item['product_id']);
                                         if (pid) {
-                                            const found = @js($products->map(fn($p) => [
-                                                'id' => $p->id,
-                                                'sku' => $p->sku,
-                                                'name' => $p->name,
-                                                'stock' => $p->current_stock,
-                                                'price' => number_format($p->selling_price, 0, ',', '.'),
-                                                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'
-                                            ])->toArray()).find(p => p.id == pid);
+                                            const found = @js(
+    $products
+        ->map(
+            fn($p) => [
+                'id' => $p->id,
+                'sku' => $p->sku,
+                'name' => $p->name,
+                'stock' => $p->current_stock,
+                'price' => number_format($p->selling_price, 0, ',', '.'),
+                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
+            ],
+        )
+        ->toArray(),
+).find(p => p.id == pid);
                                             if (found) this.selectedLabel = found.label;
                                         }
                                     },
                                     get filtered() {
-                                        const items = @js($products->map(fn($p) => [
-                                            'id' => $p->id,
-                                            'sku' => $p->sku,
-                                            'name' => $p->name,
-                                            'stock' => $p->current_stock,
-                                            'price' => number_format($p->selling_price, 0, ',', '.'),
-                                            'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'
-                                        ])->toArray());
+                                        const items = @js(
+    $products
+        ->map(
+            fn($p) => [
+                'id' => $p->id,
+                'sku' => $p->sku,
+                'name' => $p->name,
+                'stock' => $p->current_stock,
+                'price' => number_format($p->selling_price, 0, ',', '.'),
+                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
+            ],
+        )
+        ->toArray(),
+);
                                         if (!this.search) return items;
                                         const s = this.search.toLowerCase();
                                         return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
@@ -275,17 +236,23 @@
                                         <template x-for="product in filtered" :key="product.id">
                                             <button type="button" @click="select(product)"
                                                 class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-blue-50 focus:bg-blue-50 transition-colors last:border-0">
-                                                <div class="text-sm font-semibold text-gray-900" x-text="product.name"></div>
-                                                <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                                    <span x-text="product.sku" class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
-                                                    <span>Stok: <span x-text="product.stock" class="font-medium text-gray-700"></span></span>
+                                                <div class="text-sm font-semibold text-gray-900"
+                                                    x-text="product.name"></div>
+                                                <div
+                                                    class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                    <span x-text="product.sku"
+                                                        class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
+                                                    <span>Stok: <span x-text="product.stock"
+                                                            class="font-medium text-gray-700"></span></span>
                                                     <span class="text-gray-300">|</span>
-                                                    <span class="font-medium text-blue-600">Rp <span x-text="product.price"></span></span>
+                                                    <span class="font-medium text-blue-600">Rp <span
+                                                            x-text="product.price"></span></span>
                                                 </div>
                                             </button>
                                         </template>
                                         <div x-show="filtered.length === 0"
-                                            class="px-3 py-3 text-sm text-gray-400 italic text-center">Produk tidak ditemukan
+                                            class="px-3 py-3 text-sm text-gray-400 italic text-center">Produk tidak
+                                            ditemukan
                                         </div>
                                     </div>
                                 </div>
@@ -322,7 +289,8 @@
                                         this.raw = rawVal;
                                     }
                                 }">
-                                    <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)"
+                                    <input type="text" x-model="displayValue"
+                                        x-on:input="updateValue($event.target.value)"
                                         class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                         placeholder="0">
                                 </div>
@@ -382,7 +350,8 @@
                                         this.raw = rawVal;
                                     }
                                 }">
-                                    <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)"
+                                    <input type="text" x-model="displayValue"
+                                        x-on:input="updateValue($event.target.value)"
                                         class="block w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-right text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                                 </div>
                             </div>
@@ -411,23 +380,127 @@
                                         this.raw = rawVal;
                                     }
                                 }">
-                                    <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)"
+                                    <input type="text" x-model="displayValue"
+                                        x-on:input="updateValue($event.target.value)"
                                         class="block w-full rounded-lg border border-red-300 px-3 py-1.5 text-sm text-right text-red-700 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20">
                                 </div>
                             </div>
                         </div>
-                        @if ($payment_status == 'dp')
-                            <div class="flex justify-between w-full max-w-sm">
-                                <span class="text-gray-500 font-medium">Uang Muka (-):</span>
-                                <span class="text-gray-900 font-semibold">Rp
-                                    {{ number_format($this->down_payment, 0, ',', '.') }}</span>
-                            </div>
-                        @endif
                         <div class="w-full max-w-sm border-t border-gray-300 my-1"></div>
                         <div class="flex justify-between w-full max-w-sm">
                             <span class="text-lg font-bold text-gray-900">GRAND TOTAL:</span>
                             <span class="text-xl font-bold text-blue-600">Rp
-                                {{ number_format($this->grand_total, 0, ',', '.') }}</span>
+                                {{ number_format($this->grandTotal, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Rincian Pembayaran --}}
+                <div class="mt-6">
+                    <h4 class="text-sm font-semibold text-gray-800 border-b pb-2 mb-4"># Rincian Pembayaran</h4>
+                    <div class="space-y-3">
+                        @foreach ($payments as $pIndex => $payment)
+                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
+                                wire:key="payment-{{ $pIndex }}">
+                                <div class="flex-1">
+                                    <label
+                                        class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Metode
+                                        Pembayaran</label>
+                                    <select wire:model.live="payments.{{ $pIndex }}.payment_method_id"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                        <option value="">Pilih Metode...</option>
+                                        @foreach ($paymentMethods as $pm)
+                                            <option value="{{ $pm->id }}">{{ $pm->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error("payments.{$pIndex}.payment_method_id")
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="w-full sm:w-48">
+                                    <label
+                                        class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal
+                                        (Rp)</label>
+                                    <div x-data="{
+                                        raw: $wire.entangle('payments.{{ $pIndex }}.amount').live,
+                                        displayValue: '',
+                                        init() {
+                                            this.$watch('raw', value => {
+                                                if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                } else {
+                                                    this.displayValue = '';
+                                                }
+                                            });
+                                            if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                            }
+                                        },
+                                        updateValue(val) {
+                                            let rawVal = val.toString().replace(/\D/g, '');
+                                            this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                            this.raw = rawVal;
+                                        }
+                                    }">
+                                        <input type="text" x-model="displayValue"
+                                            x-on:input="updateValue($event.target.value)"
+                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                            placeholder="0">
+                                    </div>
+                                    @error("payments.{$pIndex}.amount")
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                @if (count($payments) > 1)
+                                    <button type="button" wire:click="removePayment({{ $pIndex }})"
+                                        class="self-center bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                    <button type="button" wire:click="addPayment"
+                        class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-500 bg-blue-50 px-4 py-2 rounded-xl transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Tambah Metode Pembayaran (Split)
+                    </button>
+
+                    {{-- Payment Summary --}}
+                    <div class="mt-4 bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-emerald-700">Total Dibayar:</span>
+                            <span class="text-lg font-bold text-emerald-700">Rp
+                                {{ number_format($this->totalPaid, 0, ',', '.') }}</span>
+                        </div>
+                        @if ($this->remainingBalance > 0)
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-sm font-semibold text-amber-700">Sisa Tagihan:</span>
+                                <span class="text-lg font-bold text-amber-700">Rp
+                                    {{ number_format($this->remainingBalance, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="text-xs font-semibold text-gray-500">Status Otomatis:</span>
+                            @if ($this->totalPaid >= $this->grandTotal && $this->grandTotal > 0)
+                                <span
+                                    class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">LUNAS</span>
+                            @elseif ($this->totalPaid > 0)
+                                <span
+                                    class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">DP
+                                    / CICILAN</span>
+                            @else
+                                <span
+                                    class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700">BELUM
+                                    DIBAYAR</span>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -628,104 +701,227 @@
     </div>
     <div class="mt-4">{{ $transactions->links() }}</div>
 
-    {{-- Modal Update Status --}}
+    {{-- Modal Update Status & Pembayaran --}}
     @if ($showEditForm)
         <div class="relative z-50">
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                     <div
-                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                            <div class="sm:flex sm:items-start">
-                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900 border-b pb-2">Update
-                                        Progres Transaksi</h3>
-                                    <div class="mt-4 space-y-4">
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Status
-                                                Pembayaran</label>
-                                            <select wire:model.live="edit_payment_status"
-                                                class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                                                <option value="lunas">Lunas (Cash)</option>
-                                                <option value="dp">Hutang / DP (Cicilan)</option>
-                                                <option value="belum_dibayar">Belum Dibayar</option>
-                                            </select>
-                                        </div>
-                                        @if ($edit_payment_status === 'dp')
-                                            <div>
-                                                <label
-                                                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nominal
-                                                    DP / Masuk (Rp)</label>
-                                                <div x-data="{
-                                                    raw: $wire.entangle('edit_down_payment'),
-                                                    displayValue: '',
-                                                    init() {
-                                                        this.$watch('raw', value => {
-                                                            if (value !== undefined && value !== null && value !== '') {
-                                                                this.displayValue = new Intl.NumberFormat('id-ID').format(value);
-                                                            } else {
-                                                                this.displayValue = '';
-                                                            }
-                                                        });
-                                                        if (this.raw !== undefined && this.raw !== null && this.raw !== '') {
-                                                            this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
-                                                        }
-                                                    },
-                                                    updateValue(val) {
-                                                        let rawVal = val.toString().replace(/\D/g, '');
-                                                        this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
-                                                        this.raw = rawVal;
-                                                    }
-                                                }">
-                                                    <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)"
-                                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                                                </div>
-                                                @error('edit_down_payment')
-                                                    <span class="text-red-500 text-xs">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        @endif
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
 
+                        {{-- Header --}}
+                        <div
+                            class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Kelola Pembayaran & Pengiriman</h3>
+                                <p class="text-indigo-100 text-sm mt-1">Update status transaksi</p>
+                            </div>
+                            <button wire:click="$set('showEditForm', false)"
+                                class="text-indigo-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="p-6 space-y-6">
+                            {{-- Ringkasan Tagihan --}}
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-semibold text-gray-600">Grand Total:</span>
+                                    <span class="text-lg font-bold text-gray-900">Rp
+                                        {{ number_format($this->editGrandTotal, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-semibold text-emerald-600">Total Dibayar:</span>
+                                    <span class="text-lg font-bold text-emerald-600">Rp
+                                        {{ number_format($this->editTotalPaid, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                                    <span
+                                        class="text-sm font-bold {{ $this->editRemaining > 0 ? 'text-amber-700' : 'text-emerald-700' }}">
+                                        {{ $this->editRemaining > 0 ? 'Sisa Tagihan:' : 'Status:' }}
+                                    </span>
+                                    @if ($this->editRemaining > 0)
+                                        <span class="text-lg font-bold text-amber-700">Rp
+                                            {{ number_format($this->editRemaining, 0, ',', '.') }}</span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">✓
+                                            LUNAS</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Riwayat Pembayaran yang Sudah Tersimpan --}}
+                            @if (count($edit_existing_payments) > 0)
+                                <div>
+                                    <h4
+                                        class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                        Riwayat Pembayaran</h4>
+                                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left font-semibold text-gray-600">Tanggal
+                                                    </th>
+                                                    <th class="px-4 py-2 text-left font-semibold text-gray-600">Metode
+                                                    </th>
+                                                    <th class="px-4 py-2 text-right font-semibold text-gray-600">
+                                                        Nominal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200 bg-white">
+                                                @foreach ($edit_existing_payments as $ep)
+                                                    <tr>
+                                                        <td class="px-4 py-2 text-gray-600">
+                                                            {{ $ep['payment_date'] }}</td>
+                                                        <td class="px-4 py-2 text-gray-900 font-medium">
+                                                            {{ $ep['method_name'] }}</td>
+                                                        <td class="px-4 py-2 text-right font-semibold text-gray-900">
+                                                            Rp
+                                                            {{ number_format($ep['amount'], 0, ',', '.') }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Form Tambah Pembayaran Baru --}}
+                            @if ($this->editRemaining > 0)
+                                <div>
+                                    <h4
+                                        class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                        Tambah Pembayaran (Pelunasan)</h4>
+                                    <div class="space-y-3">
+                                        @foreach ($edit_new_payments as $npIndex => $np)
+                                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
+                                                wire:key="edit-payment-{{ $npIndex }}">
+                                                <div class="flex-1">
+                                                    <select
+                                                        wire:model="edit_new_payments.{{ $npIndex }}.payment_method_id"
+                                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                                        <option value="">Pilih Metode...</option>
+                                                        @foreach ($paymentMethods as $pm)
+                                                            <option value="{{ $pm->id }}">{{ $pm->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error("edit_new_payments.{$npIndex}.payment_method_id")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                                <div class="w-full sm:w-48">
+                                                    <div x-data="{
+                                                        raw: $wire.entangle('edit_new_payments.{{ $npIndex }}.amount'),
+                                                        displayValue: '',
+                                                        init() {
+                                                            this.$watch('raw', value => {
+                                                                if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                                } else {
+                                                                    this.displayValue = '';
+                                                                }
+                                                            });
+                                                            if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                                this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                            }
+                                                        },
+                                                        updateValue(val) {
+                                                            let rawVal = val.toString().replace(/\D/g, '');
+                                                            this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                            this.raw = rawVal;
+                                                        }
+                                                    }">
+                                                        <input type="text" x-model="displayValue"
+                                                            x-on:input="updateValue($event.target.value)"
+                                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                            placeholder="0">
+                                                    </div>
+                                                    @error("edit_new_payments.{$npIndex}.amount")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                                <button type="button"
+                                                    wire:click="removeEditPayment({{ $npIndex }})"
+                                                    class="self-center bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                                        stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <button type="button" wire:click="addEditPayment"
+                                        class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-500 bg-blue-50 px-4 py-2 rounded-xl transition-colors">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        Tambah Pembayaran
+                                    </button>
+                                </div>
+                            @endif
+
+                            {{-- Pengiriman --}}
+                            <div>
+                                <h4
+                                    class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                    Status Pengiriman</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label
+                                            class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Armada
+                                            / Pengiriman</label>
+                                        <select wire:model.live="edit_shipping_status"
+                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                            <option value="bawa_sendiri">Pembeli Bawa Sendiri</option>
+                                            <option value="menunggu_dikirim">Menunggu Dikirim</option>
+                                            <option value="sedang_dikirim">Sedang Di Perjalanan</option>
+                                            <option value="sudah_diterima">Selesai Dikirim/Diterima</option>
+                                        </select>
+                                    </div>
+                                    @if ($edit_shipping_status !== 'bawa_sendiri')
                                         <div>
                                             <label
-                                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Armada
-                                                / Pengiriman</label>
-                                            <select wire:model.live="edit_shipping_status"
+                                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
+                                                Supir / Driver</label>
+                                            <input wire:model="edit_driver_name" type="text"
                                                 class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                                                <option value="bawa_sendiri">Pembeli Bawa Sendiri</option>
-                                                <option value="menunggu_dikirim">Dikirim</option>
-                                            </select>
+                                            @error('edit_driver_name')
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
                                         </div>
-                                        @if ($edit_shipping_status !== 'bawa_sendiri')
-                                            <div>
-                                                <label
-                                                    class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
-                                                    Supir / Driver</label>
-                                                <input wire:model="edit_driver_name" type="text"
-                                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                                                @error('edit_driver_name')
-                                                    <span class="text-red-500 text-xs">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        @endif
-                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                            <button type="button" wire:click="updateStatus"
-                                class="inline-flex w-full justify-center rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto">Simpan
-                                Update</button>
+
+                        {{-- Footer --}}
+                        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
                             <button type="button" wire:click="$set('showEditForm', false)"
-                                class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
+                                class="inline-flex justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                                Batal
+                            </button>
+                            <button type="button" wire:click="updateStatus"
+                                class="inline-flex justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                                Simpan Perubahan
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     @endif
+
+
 
     {{-- Modal Detail Transaksi --}}
     @if ($showDetailModal && $selectedTransaction)
@@ -809,16 +1005,24 @@
                                                     DIBAYAR</span>
                                             @endif
                                         </div>
-                                        @if ($selectedTransaction->payment_status === 'dp')
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-500">Nominal DP:</span>
-                                                <span class="font-bold text-yellow-600">Rp
-                                                    {{ number_format($selectedTransaction->down_payment, 0, ',', '.') }}</span>
-                                            </div>
+                                        @php
+                                            $grandTotal =
+                                                $selectedTransaction->total_amount -
+                                                $selectedTransaction->discount +
+                                                $selectedTransaction->shipping_cost;
+                                            $totalPaid = $selectedTransaction->payments->sum('amount');
+                                            $remaining = max(0, $grandTotal - $totalPaid);
+                                        @endphp
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-500">Total Dibayar:</span>
+                                            <span class="font-bold text-emerald-600">Rp
+                                                {{ number_format($totalPaid, 0, ',', '.') }}</span>
+                                        </div>
+                                        @if ($remaining > 0)
                                             <div class="flex justify-between">
                                                 <span class="text-gray-500">Sisa Tagihan:</span>
                                                 <span class="font-bold text-red-600">Rp
-                                                    {{ number_format($selectedTransaction->total_amount - $selectedTransaction->discount + $selectedTransaction->shipping_cost - $selectedTransaction->down_payment, 0, ',', '.') }}</span>
+                                                    {{ number_format($remaining, 0, ',', '.') }}</span>
                                             </div>
                                         @endif
                                         <div class="flex justify-between items-center">
@@ -836,6 +1040,48 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Riwayat Pembayaran -->
+                            @if ($selectedTransaction->payments->count() > 0)
+                                <h4
+                                    class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                    Riwayat Pembayaran</h4>
+                                <div class="overflow-x-auto rounded-xl border border-gray-200 mb-6">
+                                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-semibold text-gray-600">No</th>
+                                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Tanggal
+                                                </th>
+                                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Metode</th>
+                                                <th class="px-4 py-3 text-right font-semibold text-gray-600">Nominal
+                                                </th>
+                                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Catatan
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 bg-white">
+                                            @foreach ($selectedTransaction->payments as $pIdx => $payment)
+                                                <tr>
+                                                    <td class="px-4 py-3 text-gray-500">{{ $pIdx + 1 }}</td>
+                                                    <td class="px-4 py-3 text-gray-600">
+                                                        {{ $payment->payment_date->format('d/m/Y') }}</td>
+                                                    <td class="px-4 py-3">
+                                                        <span
+                                                            class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20">
+                                                            {{ $payment->paymentMethod->name ?? 'N/A' }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right font-bold text-gray-900">Rp
+                                                        {{ number_format($payment->amount, 0, ',', '.') }}</td>
+                                                    <td class="px-4 py-3 text-gray-500 text-xs">
+                                                        {{ $payment->notes ?? '-' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
 
                             <!-- Items Table -->
                             <h4
@@ -935,9 +1181,6 @@
 
 @script
     <script>
-
-
-
         /**
          * Fetch base64-encoded raw ESC/P data and open via RawBT URI intent.
          * Compatible with: RawBT Print Service (Android), NokoPrint, etc.
