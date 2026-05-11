@@ -226,9 +226,31 @@
                                         <label
                                             class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Nominal
                                             (Rp)</label>
-                                        <input type="number" wire:model="amount" required step="0.01"
-                                            class="w-full h-11 bg-gray-50 px-4 border-gray-200 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                            placeholder="0">
+                                        <div x-data="{
+                                            raw: $wire.entangle('amount'),
+                                            displayValue: '',
+                                            init() {
+                                                this.$watch('raw', value => {
+                                                    if (value !== undefined && value !== null && value !== '') {
+                                                        this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                    } else {
+                                                        this.displayValue = '';
+                                                    }
+                                                });
+                                                if (this.raw !== undefined && this.raw !== null && this.raw !== '') {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                }
+                                            },
+                                            updateValue(val) {
+                                                let rawVal = val.toString().replace(/\D/g, '');
+                                                this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                this.raw = rawVal;
+                                            }
+                                        }">
+                                            <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)" required
+                                                class="w-full h-11 bg-gray-50 px-4 border-gray-200 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                placeholder="0">
+                                        </div>
                                         @error('amount')
                                             <span class="text-[10px] text-red-500 px-1">{{ $message }}</span>
                                         @enderror
