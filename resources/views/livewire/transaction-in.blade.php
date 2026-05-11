@@ -164,9 +164,31 @@
                                     <label
                                         class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Harga
                                         Satuan</label>
-                                    <input wire:model="items.{{ $index }}.price" type="number" min="0"
-                                        placeholder="Harga"
-                                        class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+                                    <div x-data="{
+                                        raw: $wire.entangle('items.{{ $index }}.price'),
+                                        displayValue: '',
+                                        init() {
+                                            this.$watch('raw', value => {
+                                                if (value !== undefined && value !== null && value !== '') {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                } else {
+                                                    this.displayValue = '';
+                                                }
+                                            });
+                                            if (this.raw !== undefined && this.raw !== null && this.raw !== '') {
+                                                this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                            }
+                                        },
+                                        updateValue(val) {
+                                            let rawVal = val.toString().replace(/\D/g, '');
+                                            this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                            this.raw = rawVal;
+                                        }
+                                    }">
+                                        <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)"
+                                            placeholder="Harga"
+                                            class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+                                    </div>
                                     @error("items.{$index}.price")
                                         <span class="text-red-500 text-xs">{{ $message }}</span>
                                     @enderror
@@ -428,9 +450,30 @@
                                                 </td>
                                                 @if (Auth::user()->hasRole('admin'))
                                                     <td class="px-4 py-2 text-right">
-                                                        <input type="number" min="0"
-                                                            wire:model="edit_items.{{ $index }}.price"
-                                                            class="w-32 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-right text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 ml-auto block">
+                                                        <div x-data="{
+                                                            raw: $wire.entangle('edit_items.{{ $index }}.price'),
+                                                            displayValue: '',
+                                                            init() {
+                                                                this.$watch('raw', value => {
+                                                                    if (value !== undefined && value !== null && value !== '') {
+                                                                        this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                                    } else {
+                                                                        this.displayValue = '';
+                                                                    }
+                                                                });
+                                                                if (this.raw !== undefined && this.raw !== null && this.raw !== '') {
+                                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                                }
+                                                            },
+                                                            updateValue(val) {
+                                                                let rawVal = val.toString().replace(/\D/g, '');
+                                                                this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                                this.raw = rawVal;
+                                                            }
+                                                        }">
+                                                            <input type="text" x-model="displayValue" x-on:input="updateValue($event.target.value)"
+                                                                class="w-32 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-right text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 ml-auto block">
+                                                        </div>
                                                         @error("edit_items.{$index}.price")
                                                             <span
                                                                 class="text-red-500 text-xs block mt-1">{{ $message }}</span>
