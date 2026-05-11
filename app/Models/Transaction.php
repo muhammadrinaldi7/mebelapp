@@ -28,12 +28,14 @@ class Transaction extends Model
         'down_payment',
         'shipping_status',
         'driver_name',
+        'is_preorder',
     ];
 
     protected $casts = [
         'transaction_date' => 'date',
         'total_amount' => 'decimal:2',
         'down_payment' => 'decimal:2',
+        'is_preorder' => 'boolean',
     ];
 
     public function user(): BelongsTo

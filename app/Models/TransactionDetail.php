@@ -13,6 +13,7 @@ class TransactionDetail extends Model
     protected $fillable = [
         'transaction_id',
         'product_id',
+        'custom_product_name',
         'quantity',
         'price_at_transaction',
     ];

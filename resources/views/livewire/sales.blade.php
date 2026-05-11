@@ -142,8 +142,7 @@
                     <h4 class="text-sm font-semibold text-gray-800 border-b pb-2 mb-4"># Daftar Item Mebel</h4>
 
                     <div class="hidden sm:flex items-center gap-3 px-1 mb-2">
-                        <div class="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Pilih Produk
-                            (Stok)</div>
+                        <div class="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">Produk</div>
                         <div class="w-32 text-xs font-semibold text-gray-500 uppercase tracking-wide">Jumlah</div>
                         <div class="w-48 text-xs font-semibold text-gray-500 uppercase tracking-wide">Harga Satuan
                         </div>
@@ -151,111 +150,127 @@
                     </div>
 
                     @foreach ($items as $index => $item)
+                        @php $itemMode = $item['mode'] ?? 'catalog'; @endphp
                         <div
-                            class="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl mb-3 relative items-end">
-                            <div class="flex-1 w-full">
+                            class="flex flex-col sm:flex-row gap-3 p-3 {{ $itemMode === 'manual' ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100' }} border rounded-xl mb-3 relative items-end">
+
+                            {{-- Mode Toggle --}}
+                            <div class="absolute top-2 left-3 sm:left-auto sm:right-10 z-10">
+                                <button type="button" wire:click="toggleItemMode({{ $index }})"
+                                    class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full transition-colors {{ $itemMode === 'manual' ? 'bg-amber-200 text-amber-800 hover:bg-amber-300' : 'bg-gray-200 text-gray-600 hover:bg-gray-300' }}">
+                                    @if ($itemMode === 'manual')
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                        </svg>
+                                        PO / Manual
+                                    @else
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                        </svg>
+                                        Katalog
+                                    @endif
+                                </button>
+                            </div>
+
+                            <div class="flex-1 w-full mt-5 sm:mt-0">
                                 <label
-                                    class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Produk</label>
-                                <div x-data="{
-                                    open: false,
-                                    search: '',
-                                    selectedLabel: '',
-                                    init() {
-                                        const pid = @js($item['product_id']);
-                                        if (pid) {
-                                            const found = @js(
-    $products
-        ->map(
-            fn($p) => [
-                'id' => $p->id,
-                'sku' => $p->sku,
-                'name' => $p->name,
-                'stock' => $p->current_stock,
-                'price' => number_format($p->selling_price, 0, ',', '.'),
-                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
-            ],
-        )
-        ->toArray(),
-).find(p => p.id == pid);
-                                            if (found) this.selectedLabel = found.label;
+                                    class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                                    {{ $itemMode === 'manual' ? 'Nama Produk (PO)' : 'Produk' }}
+                                </label>
+
+                                @if ($itemMode === 'manual')
+                                    {{-- Manual/PO Input --}}
+                                    <input type="text"
+                                        wire:model="items.{{ $index }}.custom_name"
+                                        placeholder="Ketik nama produk PO, misal: Sofa L Custom Biru..."
+                                        class="block w-full rounded-xl border border-amber-300 px-3 py-2 text-sm text-gray-900 shadow-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" />
+                                    @error('items.' . $index . '.custom_name')
+                                        <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                    @enderror
+                                @else
+                                    {{-- Catalog Searchable Select --}}
+                                    <div x-data="{
+                                        open: false,
+                                        search: '',
+                                        selectedLabel: '',
+                                        init() {
+                                            const pid = @js($item['product_id']);
+                                            if (pid) {
+                                                const found = @js($products->map(fn($p) => ['id' => $p->id, 'sku' => $p->sku, 'name' => $p->name, 'stock' => $p->current_stock, 'price' => number_format($p->selling_price, 0, ',', '.'), 'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'])->toArray()).find(p => p.id == pid);
+                                                if (found) this.selectedLabel = found.label;
+                                            }
+                                        },
+                                        get filtered() {
+                                            const items = @js($products->map(fn($p) => ['id' => $p->id, 'sku' => $p->sku, 'name' => $p->name, 'stock' => $p->current_stock, 'price' => number_format($p->selling_price, 0, ',', '.'), 'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'])->toArray());
+                                            if (!this.search) return items;
+                                            const s = this.search.toLowerCase();
+                                            return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
+                                        },
+                                        select(product) {
+                                            this.selectedLabel = product.label;
+                                            this.search = '';
+                                            this.open = false;
+                                            $wire.set('items.{{ $index }}.product_id', product.id);
+                                        },
+                                        clear() {
+                                            this.selectedLabel = '';
+                                            this.search = '';
+                                            $wire.set('items.{{ $index }}.product_id', '');
                                         }
-                                    },
-                                    get filtered() {
-                                        const items = @js(
-    $products
-        ->map(
-            fn($p) => [
-                'id' => $p->id,
-                'sku' => $p->sku,
-                'name' => $p->name,
-                'stock' => $p->current_stock,
-                'price' => number_format($p->selling_price, 0, ',', '.'),
-                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
-            ],
-        )
-        ->toArray(),
-);
-                                        if (!this.search) return items;
-                                        const s = this.search.toLowerCase();
-                                        return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
-                                    },
-                                    select(product) {
-                                        this.selectedLabel = product.label;
-                                        this.search = '';
-                                        this.open = false;
-                                        $wire.set('items.{{ $index }}.product_id', product.id);
-                                    },
-                                    clear() {
-                                        this.selectedLabel = '';
-                                        this.search = '';
-                                        $wire.set('items.{{ $index }}.product_id', '');
-                                    }
-                                }" @click.outside="open = false" class="relative">
-                                    <div class="relative">
-                                        <input type="text" x-show="open || !selectedLabel" x-ref="searchInput"
-                                            x-model="search" @focus="open = true" @click="open = true"
-                                            placeholder="Cari nama atau SKU produk..."
-                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
-                                        <button type="button" x-show="!open && selectedLabel"
-                                            @click="open = true; $nextTick(() => $refs.searchInput.focus())"
-                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 shadow-sm hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white">
-                                            <span
-                                                x-text="selectedLabel.length > 50 ? selectedLabel.substring(0, 50) + '...' : selectedLabel"
-                                                class="truncate block"></span>
-                                        </button>
-                                        <button type="button" x-show="selectedLabel" @click="clear()"
-                                            class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
-                                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path
-                                                    d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div x-show="open" x-cloak
-                                        class="absolute z-50 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
-                                        <template x-for="product in filtered" :key="product.id">
-                                            <button type="button" @click="select(product)"
-                                                class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-blue-50 focus:bg-blue-50 transition-colors last:border-0">
-                                                <div class="text-sm font-semibold text-gray-900"
-                                                    x-text="product.name"></div>
-                                                <div
-                                                    class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                                    <span x-text="product.sku"
-                                                        class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
-                                                    <span>Stok: <span x-text="product.stock"
-                                                            class="font-medium text-gray-700"></span></span>
-                                                    <span class="text-gray-300">|</span>
-                                                    <span class="font-medium text-blue-600">Rp <span
-                                                            x-text="product.price"></span></span>
-                                                </div>
+                                    }" @click.outside="open = false" class="relative">
+                                        <div class="relative">
+                                            <input type="text" x-show="open || !selectedLabel" x-ref="searchInput"
+                                                x-model="search" @focus="open = true" @click="open = true"
+                                                placeholder="Cari nama atau SKU produk..."
+                                                class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                            <button type="button" x-show="!open && selectedLabel"
+                                                @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                                                class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 shadow-sm hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white">
+                                                <span
+                                                    x-text="selectedLabel.length > 50 ? selectedLabel.substring(0, 50) + '...' : selectedLabel"
+                                                    class="truncate block"></span>
                                             </button>
-                                        </template>
-                                        <div x-show="filtered.length === 0"
-                                            class="px-3 py-3 text-sm text-gray-400 italic text-center">Produk tidak
-                                            ditemukan
+                                            <button type="button" x-show="selectedLabel" @click="clear()"
+                                                class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path
+                                                        d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div x-show="open" x-cloak
+                                            class="absolute z-50 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
+                                            <template x-for="product in filtered" :key="product.id">
+                                                <button type="button" @click="select(product)"
+                                                    class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-blue-50 focus:bg-blue-50 transition-colors last:border-0">
+                                                    <div class="text-sm font-semibold text-gray-900"
+                                                        x-text="product.name"></div>
+                                                    <div
+                                                        class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                        <span x-text="product.sku"
+                                                            class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
+                                                        <span>Stok: <span x-text="product.stock"
+                                                                class="font-medium text-gray-700"></span></span>
+                                                        <span class="text-gray-300">|</span>
+                                                        <span class="font-medium text-blue-600">Rp <span
+                                                                x-text="product.price"></span></span>
+                                                    </div>
+                                                </button>
+                                            </template>
+                                            <div x-show="filtered.length === 0"
+                                                class="px-3 py-3 text-sm text-gray-400 italic text-center">Produk tidak
+                                                ditemukan
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                    @error('items.' . $index . '.product_id')
+                                        <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                    @enderror
+                                @endif
                             </div>
                             <div class="w-full sm:w-32">
                                 <label
@@ -302,9 +317,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
-                            @error('items.' . $index . '.product_id')
-                                <span class="text-red-500 text-xs absolute -bottom-5 w-full">{{ $message }}</span>
-                            @enderror
                         </div>
                     @endforeach
 
@@ -317,6 +329,7 @@
                         Tambah Item Lain
                     </button>
                 </div>
+
 
                 {{-- Kalkulasi Total --}}
                 <div class="mt-8 bg-gray-50 rounded-xl p-5 border border-gray-200">
@@ -599,6 +612,12 @@
                                     @else
                                         <span
                                             class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-[10px] font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">{{ str_replace('_', ' ', Str::title($trx->shipping_status)) }}</span>
+                                    @endif
+
+                                    @if ($trx->is_preorder)
+                                        <span
+                                            class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">PO
+                                            / Indent</span>
                                     @endif
                                 </div>
                             </td>
@@ -1102,10 +1121,34 @@
                                         @foreach ($selectedTransaction->details as $item)
                                             <tr>
                                                 <td class="px-4 py-3">
-                                                    <div class="font-medium text-gray-900">
-                                                        {{ $item->product->name ?? '-' }}</div>
-                                                    <div class="text-xs text-gray-500">{{ $item->product->sku ?? '' }}
-                                                    </div>
+                                                    @if ($item->product_id)
+                                                        <div class="font-medium text-gray-900">
+                                                            {{ $item->product->name ?? '-' }}</div>
+                                                        <div class="text-xs text-gray-500">
+                                                            {{ $item->product->sku ?? '' }}
+                                                        </div>
+                                                    @else
+                                                        <div class="font-medium text-gray-900">
+                                                            {{ $item->custom_product_name ?? 'Item Manual' }}
+                                                        </div>
+                                                        <div class="flex items-center gap-2 mt-1">
+                                                            <span
+                                                                class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-inset ring-amber-600/20">PO
+                                                                / INDENT</span>
+                                                            <button type="button"
+                                                                wire:click="openConvertModal({{ $item->id }})"
+                                                                class="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors">
+                                                                <svg class="w-3 h-3" fill="none"
+                                                                    viewBox="0 0 24 24" stroke-width="2"
+                                                                    stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                                                </svg>
+                                                                Convert ke Produk
+                                                            </button>
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td class="px-4 py-3 text-center text-gray-600">Rp
                                                     {{ number_format($item->price_at_transaction, 0, ',', '.') }}</td>
@@ -1172,6 +1215,192 @@
                             </button>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Modal Convert PO to Product --}}
+    @if ($showConvertModal)
+        <div class="relative z-50" aria-modal="true">
+            <div class="fixed inset-0 bg-gray-500/75 transition-opacity"></div>
+            <div class="fixed inset-0 z-50 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+
+                        <!-- Header -->
+                        <div
+                            class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Konversi ke Produk</h3>
+                                <p class="text-amber-100 text-sm mt-0.5">Buat master data produk dari item PO</p>
+                            </div>
+                            <button wire:click="closeConvertModal"
+                                class="text-amber-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="p-6 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="sm:col-span-2">
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nama
+                                        Produk</label>
+                                    <input wire:model="convert_name" type="text"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                    @error('convert_name')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">SKU
+                                        / Kode Produk</label>
+                                    <input wire:model="convert_sku" type="text" placeholder="Misal: MBL-SF-001"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                    @error('convert_sku')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Satuan</label>
+                                    <input wire:model="convert_satuan" type="text" placeholder="pcs"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Kategori</label>
+                                    <select wire:model="convert_category_id"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                        <option value="">Pilih Kategori...</option>
+                                        @foreach ($categories as $cat)
+                                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('convert_category_id')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Merek</label>
+                                    <select wire:model="convert_brand_id"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                        <option value="">Pilih Merek...</option>
+                                        @foreach ($brands as $brand)
+                                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('convert_brand_id')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Harga
+                                        Modal (Rp)</label>
+                                    <div x-data="{
+                                        raw: $wire.entangle('convert_base_price'),
+                                        displayValue: '',
+                                        init() {
+                                            this.$watch('raw', value => {
+                                                if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                } else {
+                                                    this.displayValue = '';
+                                                }
+                                            });
+                                            if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                            }
+                                        },
+                                        updateValue(val) {
+                                            let rawVal = val.toString().replace(/\D/g, '');
+                                            this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                            this.raw = rawVal;
+                                        }
+                                    }">
+                                        <input type="text" x-model="displayValue"
+                                            x-on:input="updateValue($event.target.value)"
+                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-right shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                                            placeholder="0">
+                                    </div>
+                                    @error('convert_base_price')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Harga
+                                        Jual (Rp)</label>
+                                    <div x-data="{
+                                        raw: $wire.entangle('convert_selling_price'),
+                                        displayValue: '',
+                                        init() {
+                                            this.$watch('raw', value => {
+                                                if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                } else {
+                                                    this.displayValue = '';
+                                                }
+                                            });
+                                            if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                            }
+                                        },
+                                        updateValue(val) {
+                                            let rawVal = val.toString().replace(/\D/g, '');
+                                            this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                            this.raw = rawVal;
+                                        }
+                                    }">
+                                        <input type="text" x-model="displayValue"
+                                            x-on:input="updateValue($event.target.value)"
+                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-right shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                                            placeholder="0">
+                                    </div>
+                                    @error('convert_selling_price')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Jumlah
+                                        Stok Masuk</label>
+                                    <input wire:model="convert_stock" type="number" min="0"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-center shadow-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                    @error('convert_stock')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="bg-amber-50 rounded-xl p-3 border border-amber-200 text-xs text-amber-800">
+                                <span class="font-bold">Info:</span> Sistem akan otomatis:
+                                <ul class="list-disc list-inside mt-1 space-y-0.5">
+                                    <li>Buat produk baru di master data</li>
+                                    <li>Link item PO ke produk baru</li>
+                                    <li>Buat record "Barang Masuk" untuk stok</li>
+                                    <li>Kurangi stok sesuai qty yang sudah terjual</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
+                            <button type="button" wire:click="closeConvertModal"
+                                class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Batal</button>
+                            <button type="button" wire:click="convertToProduct"
+                                class="rounded-xl bg-amber-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500 active:scale-95 transition-transform">
+                                Konversi & Simpan
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

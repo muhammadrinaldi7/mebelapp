@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Transaction;
@@ -22,6 +24,7 @@ class Sales extends Component
     public $showForm = false;
     public $showEditForm = false;
     public $showDetailModal = false;
+    public $showConvertModal = false;
     public $editingTransactionId = null;
     public $selectedTransaction = null;
     public $reference_code = '';
@@ -50,40 +53,23 @@ class Sales extends Component
     public $edit_existing_payments = []; // Pembayaran yang sudah tersimpan (readonly)
     public $edit_new_payments = [];      // Pembayaran baru (pelunasan)
 
+    // Convert PO to Product
+    public $convertDetailId = null;
+    public $convert_sku = '';
+    public $convert_name = '';
+    public $convert_category_id = '';
+    public $convert_brand_id = '';
+    public $convert_base_price = 0;
+    public $convert_selling_price = 0;
+    public $convert_stock = 1;
+    public $convert_satuan = 'pcs';
+
     public $search = '';
-
-    protected $rules = [
-        'reference_code' => 'required|string|max:255',
-        'transaction_date' => 'required|date',
-        'customer_name' => 'nullable|string|max:255',
-        'customer_phone' => 'nullable|string|max:50',
-        'customer_address' => 'nullable|string',
-        'salesperson_name' => 'nullable|string|max:255',
-        'discount' => 'nullable|numeric|min:0',
-        'shipping_cost' => 'nullable|numeric|min:0',
-        'shipping_status' => 'required|in:bawa_sendiri,menunggu_dikirim,sedang_dikirim,sudah_diterima',
-        'driver_name' => 'nullable|string|max:255',
-        'items' => 'required|array|min:1',
-        'items.*.product_id' => 'required|exists:products,id',
-        'items.*.quantity' => 'required|integer|min:1',
-        'items.*.price' => 'required|numeric|min:0',
-        'payments' => 'required|array|min:1',
-        'payments.*.payment_method_id' => 'required|exists:payment_methods,id',
-        'payments.*.amount' => 'required|numeric|min:1',
-    ];
-
-    protected $messages = [
-        'payments.required' => 'Minimal satu pembayaran harus diisi.',
-        'payments.min' => 'Minimal satu pembayaran harus diisi.',
-        'payments.*.payment_method_id.required' => 'Pilih metode pembayaran.',
-        'payments.*.amount.required' => 'Nominal pembayaran harus diisi.',
-        'payments.*.amount.min' => 'Nominal pembayaran minimal 1.',
-    ];
 
     public function mount()
     {
         $this->transaction_date = now()->format('Y-m-d');
-        $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
+        $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0, 'mode' => 'catalog', 'custom_name' => '']];
         $this->payments = [['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0]];
     }
 
@@ -107,14 +93,14 @@ class Sales extends Component
         $this->shipping_cost = 0;
         $this->shipping_status = 'bawa_sendiri';
         $this->driver_name = '';
-        $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
+        $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0, 'mode' => 'catalog', 'custom_name' => '']];
         $this->payments = [['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0]];
         $this->showForm = true;
     }
 
     public function addItem()
     {
-        $this->items[] = ['product_id' => '', 'quantity' => 1, 'price' => 0];
+        $this->items[] = ['product_id' => '', 'quantity' => 1, 'price' => 0, 'mode' => 'catalog', 'custom_name' => ''];
     }
 
     public function removeItem($index)
@@ -123,6 +109,16 @@ class Sales extends Component
             unset($this->items[$index]);
             $this->items = array_values($this->items);
         }
+    }
+
+    public function toggleItemMode($index)
+    {
+        $currentMode = $this->items[$index]['mode'] ?? 'catalog';
+        $this->items[$index]['mode'] = $currentMode === 'catalog' ? 'manual' : 'catalog';
+        // Reset fields when toggling
+        $this->items[$index]['product_id'] = '';
+        $this->items[$index]['custom_name'] = '';
+        $this->items[$index]['price'] = 0;
     }
 
     public function addPayment()
@@ -151,7 +147,7 @@ class Sales extends Component
 
     public function updatedItems($value, $key)
     {
-        // Auto-fill selling price when product is selected
+        // Auto-fill selling price when product is selected (catalog mode only)
         $parts = explode('.', $key);
         if (count($parts) === 2 && $parts[1] === 'product_id' && $value) {
             $product = Product::find($value);
@@ -177,18 +173,59 @@ class Sales extends Component
 
     public function save()
     {
-        $this->validate();
+        // Build dynamic validation rules
+        $rules = [
+            'reference_code' => 'required|string|max:255',
+            'transaction_date' => 'required|date',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_phone' => 'nullable|string|max:50',
+            'customer_address' => 'nullable|string',
+            'salesperson_name' => 'nullable|string|max:255',
+            'discount' => 'nullable|numeric|min:0',
+            'shipping_cost' => 'nullable|numeric|min:0',
+            'shipping_status' => 'required|in:bawa_sendiri,menunggu_dikirim,sedang_dikirim,sudah_diterima',
+            'driver_name' => 'nullable|string|max:255',
+            'items' => 'required|array|min:1',
+            'payments' => 'required|array|min:1',
+            'payments.*.payment_method_id' => 'required|exists:payment_methods,id',
+            'payments.*.amount' => 'required|numeric|min:1',
+        ];
 
-        // Validate stock availability
+        // Dynamic item validation based on mode
+        foreach ($this->items as $idx => $item) {
+            $mode = $item['mode'] ?? 'catalog';
+            if ($mode === 'catalog') {
+                $rules["items.{$idx}.product_id"] = 'required|exists:products,id';
+            } else {
+                $rules["items.{$idx}.custom_name"] = 'required|string|max:255';
+            }
+            $rules["items.{$idx}.quantity"] = 'required|integer|min:1';
+            $rules["items.{$idx}.price"] = 'required|numeric|min:0';
+        }
+
+        $this->validate($rules, [
+            'items.*.custom_name.required' => 'Nama produk PO harus diisi.',
+            'items.*.product_id.required' => 'Pilih produk dari katalog.',
+            'payments.*.payment_method_id.required' => 'Pilih metode pembayaran.',
+            'payments.*.amount.required' => 'Nominal pembayaran harus diisi.',
+            'payments.*.amount.min' => 'Nominal pembayaran minimal 1.',
+        ]);
+
+        // Validate stock availability for catalog items only
         foreach ($this->items as $item) {
-            $product = Product::find($item['product_id']);
-            if ($product && $product->current_stock < $item['quantity']) {
-                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}");
-                return;
+            if (($item['mode'] ?? 'catalog') === 'catalog') {
+                $product = Product::find($item['product_id']);
+                if ($product && $product->current_stock < $item['quantity']) {
+                    $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}");
+                    return;
+                }
             }
         }
 
-        DB::transaction(function () {
+        // Check if any item is manual/PO
+        $hasPreorderItems = collect($this->items)->contains(fn($item) => ($item['mode'] ?? 'catalog') === 'manual');
+
+        DB::transaction(function () use ($hasPreorderItems) {
             $totalAmount = collect($this->items)->sum(fn($item) => $item['quantity'] * $item['price']);
             $grandTotal = $totalAmount - ($this->discount ?: 0) + ($this->shipping_cost ?: 0);
             $totalPaid = collect($this->payments)->sum(fn($p) => (float) ($p['amount'] ?? 0));
@@ -209,15 +246,19 @@ class Sales extends Component
                 'discount' => $this->discount ?: 0,
                 'shipping_cost' => $this->shipping_cost ?: 0,
                 'payment_status' => $paymentStatus,
-                'down_payment' => $totalPaid, // Keep for backward compat
+                'down_payment' => $totalPaid,
                 'shipping_status' => $this->shipping_status,
                 'driver_name' => $this->shipping_status !== 'bawa_sendiri' ? $this->driver_name : null,
+                'is_preorder' => $hasPreorderItems,
             ]);
 
             foreach ($this->items as $item) {
+                $mode = $item['mode'] ?? 'catalog';
+
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,
-                    'product_id' => $item['product_id'],
+                    'product_id' => $mode === 'catalog' ? $item['product_id'] : null,
+                    'custom_product_name' => $mode === 'manual' ? $item['custom_name'] : null,
                     'quantity' => $item['quantity'],
                     'price_at_transaction' => $item['price'],
                 ]);
@@ -328,6 +369,128 @@ class Sales extends Component
         $this->selectedTransaction = null;
     }
 
+    // =====================================================
+    // Convert PO Item to Product
+    // =====================================================
+
+    public function openConvertModal($detailId)
+    {
+        $detail = TransactionDetail::find($detailId);
+        if (!$detail || $detail->product_id !== null) {
+            $this->dispatch('notify', type: 'error', message: 'Item ini sudah memiliki produk terdaftar.');
+            return;
+        }
+
+        $this->convertDetailId = $detailId;
+        $this->convert_name = $detail->custom_product_name ?? '';
+        $this->convert_sku = '';
+        $this->convert_category_id = '';
+        $this->convert_brand_id = '';
+        $this->convert_base_price = 0;
+        $this->convert_selling_price = $detail->price_at_transaction;
+        $this->convert_stock = $detail->quantity;
+        $this->convert_satuan = 'pcs';
+
+        $this->showConvertModal = true;
+    }
+
+    public function closeConvertModal()
+    {
+        $this->showConvertModal = false;
+        $this->convertDetailId = null;
+    }
+
+    public function convertToProduct()
+    {
+        $this->validate([
+            'convert_sku' => 'required|string|max:255|unique:products,sku',
+            'convert_name' => 'required|string|max:255',
+            'convert_category_id' => 'required|exists:categories,id',
+            'convert_brand_id' => 'required|exists:brands,id',
+            'convert_base_price' => 'required|numeric|min:0',
+            'convert_selling_price' => 'required|numeric|min:0',
+            'convert_stock' => 'required|integer|min:0',
+            'convert_satuan' => 'required|string|max:50',
+        ], [
+            'convert_sku.required' => 'SKU harus diisi.',
+            'convert_sku.unique' => 'SKU sudah digunakan produk lain.',
+            'convert_name.required' => 'Nama produk harus diisi.',
+            'convert_category_id.required' => 'Pilih kategori.',
+            'convert_brand_id.required' => 'Pilih merek.',
+        ]);
+
+        $detail = TransactionDetail::with('transaction')->find($this->convertDetailId);
+        if (!$detail) {
+            $this->dispatch('notify', type: 'error', message: 'Data item tidak ditemukan.');
+            return;
+        }
+
+        DB::transaction(function () use ($detail) {
+            // 1. Create the new Product with stock = 0
+            //    (Observer akan otomatis increment saat Barang Masuk dibuat)
+            $product = Product::create([
+                'sku' => $this->convert_sku,
+                'name' => $this->convert_name,
+                'category_id' => $this->convert_category_id,
+                'brand_id' => $this->convert_brand_id,
+                'base_price' => $this->convert_base_price,
+                'selling_price' => $this->convert_selling_price,
+                'current_stock' => 0, // Mulai dari 0, akan ditambah oleh Observer
+                'satuan' => $this->convert_satuan,
+            ]);
+
+            // 2. Link the transaction detail to the product
+            $detail->update([
+                'product_id' => $product->id,
+                'custom_product_name' => null,
+            ]);
+
+            // 3. Create "Barang Masuk" record → Observer auto-increment stock
+            $incomingTrx = Transaction::create([
+                'user_id' => Auth::id(),
+                'type' => 'in',
+                'reference_code' => 'PO-IN-' . date('YmdHis'),
+                'transaction_date' => now()->format('Y-m-d'),
+                'notes' => 'Auto: Konversi PO dari penjualan ' . $detail->transaction->reference_code,
+                'total_amount' => $this->convert_base_price * $this->convert_stock,
+                'payment_status' => 'lunas',
+                'shipping_status' => 'sudah_diterima',
+            ]);
+
+            // Observer akan otomatis increment current_stock produk
+            TransactionDetail::create([
+                'transaction_id' => $incomingTrx->id,
+                'product_id' => $product->id,
+                'quantity' => $this->convert_stock,
+                'price_at_transaction' => $this->convert_base_price,
+            ]);
+
+            // 4. Check if all PO items in the parent transaction are now converted
+            $remainingPO = $detail->transaction->details()
+                ->whereNull('product_id')
+                ->where('custom_product_name', '!=', null)
+                ->count();
+
+            if ($remainingPO === 0) {
+                $detail->transaction->update(['is_preorder' => false]);
+            }
+        });
+
+        $this->showConvertModal = false;
+        $this->convertDetailId = null;
+
+        // Refresh the detail modal if it's open
+        if ($this->selectedTransaction) {
+            $this->selectedTransaction = Transaction::with(['user', 'details.product', 'details.product.category', 'details.product.brand', 'payments.paymentMethod'])->find($this->selectedTransaction->id);
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Produk berhasil dibuat dan item PO telah di-link!');
+    }
+
+    // =====================================================
+    // Computed Properties
+    // =====================================================
+
     public function getSubtotalProperty()
     {
         return collect($this->items)->sum(fn($item) => ((float)($item['price'] ?? 0)) * ((int)($item['quantity'] ?? 0)));
@@ -382,6 +545,8 @@ class Sales extends Component
             'transactions' => $transactions,
             'products' => Product::orderBy('name')->get(),
             'paymentMethods' => PaymentMethod::where('is_active', true)->orderBy('name')->get(),
+            'categories' => Category::orderBy('name')->get(),
+            'brands' => Brand::orderBy('name')->get(),
         ]);
     }
 }
