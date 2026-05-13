@@ -35,7 +35,7 @@
     @endif
 
     @if ($showForm)
-        <div class="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-2xl p-6 relative overflow-hidden">
+        <div class="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-2xl p-6 relative overflow-hidden" x-data="{ catalogProducts: @js($products->map(fn($p) => ['id' => $p->id, 'sku' => $p->sku, 'name' => $p->name, 'stock' => $p->current_stock, 'price' => number_format($p->selling_price, 0, ',', '.'), 'label' => '[' . ($p->sku ?: '-') . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'])->toArray()) }">
             <div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-blue-500 to-indigo-500"></div>
             <h3 class="text-lg font-bold text-gray-900 mb-6">Formulir Penjualan</h3>
             <form wire:submit="save" class="space-y-6">
@@ -155,7 +155,7 @@
                             class="flex flex-col sm:flex-row gap-3 p-3 {{ $itemMode === 'manual' ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100' }} border rounded-xl mb-3 relative items-end">
 
                             {{-- Mode Toggle --}}
-                            <div class="absolute top-2 left-3 sm:left-auto sm:right-10 z-10">
+                            <div class="absolute top-0 left-1 z-10">
                                 <button type="button" wire:click="toggleItemMode({{ $index }})"
                                     class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full transition-colors {{ $itemMode === 'manual' ? 'bg-amber-200 text-amber-800 hover:bg-amber-300' : 'bg-gray-200 text-gray-600 hover:bg-gray-300' }}">
                                     @if ($itemMode === 'manual')
@@ -184,8 +184,7 @@
 
                                 @if ($itemMode === 'manual')
                                     {{-- Manual/PO Input --}}
-                                    <input type="text"
-                                        wire:model="items.{{ $index }}.custom_name"
+                                    <input type="text" wire:model="items.{{ $index }}.custom_name"
                                         placeholder="Ketik nama produk PO, misal: Sofa L Custom Biru..."
                                         class="block w-full rounded-xl border border-amber-300 px-3 py-2 text-sm text-gray-900 shadow-sm bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" />
                                     @error('items.' . $index . '.custom_name')
@@ -200,15 +199,14 @@
                                         init() {
                                             const pid = @js($item['product_id']);
                                             if (pid) {
-                                                const found = @js($products->map(fn($p) => ['id' => $p->id, 'sku' => $p->sku, 'name' => $p->name, 'stock' => $p->current_stock, 'price' => number_format($p->selling_price, 0, ',', '.'), 'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'])->toArray()).find(p => p.id == pid);
+                                                const found = catalogProducts.find(p => p.id == pid);
                                                 if (found) this.selectedLabel = found.label;
                                             }
                                         },
                                         get filtered() {
-                                            const items = @js($products->map(fn($p) => ['id' => $p->id, 'sku' => $p->sku, 'name' => $p->name, 'stock' => $p->current_stock, 'price' => number_format($p->selling_price, 0, ',', '.'), 'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')'])->toArray());
-                                            if (!this.search) return items;
+                                            if (!this.search) return catalogProducts;
                                             const s = this.search.toLowerCase();
-                                            return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
+                                            return catalogProducts.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
                                         },
                                         select(product) {
                                             this.selectedLabel = product.label;
@@ -433,7 +431,8 @@
                                 <div class="w-full sm:w-48">
                                     <label
                                         class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal
-                                        (Rp)</label>
+                                        (Rp)
+                                    </label>
                                     <div x-data="{
                                         raw: $wire.entangle('payments.{{ $pIndex }}.amount').live,
                                         displayValue: '',
@@ -731,7 +730,7 @@
 
                         {{-- Header --}}
                         <div
-                            class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 flex justify-between items-center">
+                            class="bg-linear-to-r from-indigo-600 to-blue-600 px-6 py-4 flex justify-between items-center">
                             <div>
                                 <h3 class="text-lg font-bold text-white">Kelola Pembayaran & Pengiriman</h3>
                                 <p class="text-indigo-100 text-sm mt-1">Update status transaksi</p>
@@ -953,7 +952,7 @@
 
                         <!-- Header -->
                         <div
-                            class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
+                            class="bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
                             <div>
                                 <h3 class="text-lg font-bold text-white">Detail Penjualan:
                                     {{ $selectedTransaction->reference_code }}</h3>
@@ -1232,7 +1231,7 @@
 
                         <!-- Header -->
                         <div
-                            class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex justify-between items-center">
+                            class="bg-linear-to-r from-amber-500 to-orange-500 px-6 py-4 flex justify-between items-center">
                             <div>
                                 <h3 class="text-lg font-bold text-white">Konversi ke Produk</h3>
                                 <p class="text-amber-100 text-sm mt-0.5">Buat master data produk dari item PO</p>

@@ -237,6 +237,18 @@
                                 <span class="nav-tooltip">Metode Pembayaran</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('activity-logs.index') }}" data-tooltip="Activity Logs"
+                                class="ios-nav-item {{ request()->routeIs('activity-logs.*') ? 'bg-white/15 text-white shadow-sm' : 'text-indigo-100/90 hover:bg-white/10 hover:text-white' }} group flex gap-x-3 rounded-xl px-3 py-2.5 text-[14px] font-medium relative">
+                                <svg class="h-5 w-5 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="sidebar-text">Activity Logs</span>
+                                <span class="nav-tooltip">Activity Logs</span>
+                            </a>
+                        </li>
                     </ul>
                 </li>
             @endrole
