@@ -314,6 +314,30 @@ class Sales extends Component
         }
     }
 
+    public function deleteTransaction($id)
+    {
+        $transaction = Transaction::with('details')->find($id);
+
+        if ($transaction) {
+            DB::transaction(function () use ($transaction) {
+                // Delete details one by one to trigger observer for stock restoration
+                foreach ($transaction->details as $detail) {
+                    $detail->delete();
+                }
+
+                // Delete payments
+                $transaction->payments()->delete();
+
+                // Delete transaction
+                $transaction->delete();
+            });
+
+            $this->dispatch('notify', type: 'success', message: 'Transaksi penjualan berhasil dihapus dan stok dikembalikan.');
+        } else {
+            $this->dispatch('notify', type: 'error', message: 'Transaksi tidak ditemukan.');
+        }
+    }
+
     public function openDetailModal($id)
     {
         $this->selectedTransaction = Transaction::with(['user', 'details.product', 'details.product.category', 'details.product.brand', 'payments.paymentMethod'])->find($id);
