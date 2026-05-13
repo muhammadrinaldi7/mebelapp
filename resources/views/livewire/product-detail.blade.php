@@ -118,9 +118,12 @@
                         <tr class="hover:bg-gray-50/80 transition-colors">
                             <td class="px-8 py-4">
                                 <div class="text-sm font-bold text-gray-900">
-                                    {{ \Carbon\Carbon::parse($transaction->created_at)->format('d M Y') }}</div>
+                                    {{ \Carbon\Carbon::parse($transaction->transaction->transaction_date)->format('d M Y') }}
+                                </div>
                                 <div class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">
-                                    {{ \Carbon\Carbon::parse($transaction->created_at)->format('H:i') }}</div>
+                                    {{ $transaction->transaction->reference_code }}</div>
+                                {{-- <div class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">
+                                    {{ \Carbon\Carbon::parse($transaction->created_at)->format('H:i') }}</div> --}}
                             </td>
                             <td class="px-8 py-4">
                                 @php
