@@ -138,7 +138,7 @@
                                             'label' => 'Stok Keluar',
                                             'icon' => 'M5 10l7-7m0 0l7 7m-7-7v18',
                                         ],
-                                        'sales' => [
+                                        'sale' => [
                                             'bg' => 'bg-blue-50',
                                             'text' => 'text-blue-700',
                                             'label' => 'Penjualan',
