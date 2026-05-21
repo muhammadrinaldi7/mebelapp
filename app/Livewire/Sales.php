@@ -49,6 +49,8 @@ class Sales extends Component
     public $edit_driver_name = '';
     public $edit_existing_payments = []; // Pembayaran yang sudah tersimpan (readonly)
     public $edit_new_payments = [];      // Pembayaran baru (pelunasan)
+    public $edit_items = [];
+    public $original_items = [];
 
     public $search = '';
 
@@ -117,6 +119,20 @@ class Sales extends Component
         $this->items[] = ['product_id' => '', 'quantity' => 1, 'price' => 0];
     }
 
+    // Add/Edit item methods for edit modal
+    public function addEditItem()
+    {
+        $this->edit_items[] = ['id' => null, 'product_id' => '', 'quantity' => 1, 'price' => 0];
+    }
+
+    public function removeEditItem($index)
+    {
+        if (count($this->edit_items) > 1) {
+            unset($this->edit_items[$index]);
+            $this->edit_items = array_values($this->edit_items);
+        }
+    }
+
     public function removeItem($index)
     {
         if (count($this->items) > 1) {
@@ -158,6 +174,19 @@ class Sales extends Component
             if ($product) {
                 $index = $parts[0];
                 $this->items[$index]['price'] = $product->selling_price;
+            }
+        }
+    }
+
+    public function updatedEditItems($value, $key)
+    {
+        // Auto-fill selling price when product is selected in edit modal
+        $parts = explode('.', $key);
+        if (count($parts) === 2 && $parts[1] === 'product_id' && $value) {
+            $product = Product::find($value);
+            if ($product) {
+                $index = $parts[0];
+                $this->edit_items[$index]['price'] = $product->selling_price;
             }
         }
     }
@@ -243,7 +272,7 @@ class Sales extends Component
 
     public function openEditForm($id)
     {
-        $transaction = Transaction::with('payments.paymentMethod')->find($id);
+        $transaction = Transaction::with(['payments.paymentMethod', 'details'])->find($id);
         if ($transaction) {
             $this->editingTransactionId = $transaction->id;
             $this->edit_shipping_status = $transaction->shipping_status ?? 'bawa_sendiri';
@@ -258,6 +287,16 @@ class Sales extends Component
                 'notes' => $p->notes,
             ])->toArray();
 
+            // Load transaction items for editing
+            $this->edit_items = $transaction->details->map(fn($d) => [
+                'id' => $d->id,
+                'product_id' => $d->product_id,
+                'quantity' => $d->quantity,
+                'price' => $d->price_at_transaction,
+            ])->toArray();
+            // Keep a copy of original items for stock diff calculation
+            $this->original_items = $this->edit_items;
+
             // Prepare empty new payment form
             $this->edit_new_payments = [];
 
@@ -270,6 +309,9 @@ class Sales extends Component
         $rules = [
             'edit_shipping_status' => 'required|in:bawa_sendiri,menunggu_dikirim,sedang_dikirim,sudah_diterima',
             'edit_driver_name' => 'nullable|string|max:255',
+            'edit_items' => 'required|array|min:1',
+            'edit_items.*.product_id' => 'required|exists:products,id',
+            'edit_items.*.quantity' => 'required|integer|min:1',
         ];
 
         // If there are new payments, validate them
@@ -280,9 +322,78 @@ class Sales extends Component
 
         $this->validate($rules);
 
+        // Stock validation: check if new quantities/products have enough stock
+        foreach ($this->edit_items as $idx => $item) {
+            $product = Product::find($item['product_id']);
+            if (!$product) continue;
+
+            $original = $this->original_items[$idx] ?? null;
+            $availableStock = $product->current_stock;
+
+            // If same product, available = current_stock + original_qty (since we'll restore first)
+            if ($original && $original['product_id'] == $item['product_id']) {
+                $availableStock = $product->current_stock + $original['quantity'];
+            }
+
+            if ($availableStock < $item['quantity']) {
+                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$availableStock}");
+                return;
+            }
+        }
+
         $transaction = Transaction::with('payments', 'details')->find($this->editingTransactionId);
         if ($transaction) {
             DB::transaction(function () use ($transaction) {
+                // Build lookup of original items by their detail ID
+                $originalById = collect($this->original_items)->keyBy('id');
+                $editedIds = collect($this->edit_items)->pluck('id')->filter()->toArray();
+
+                // 1. Handle removed items: restore stock for originals no longer present
+                foreach ($this->original_items as $original) {
+                    if ($original['id'] && !in_array($original['id'], $editedIds)) {
+                        // Restore stock
+                        Product::where('id', $original['product_id'])->increment('current_stock', $original['quantity']);
+                        // Delete the detail record
+                        TransactionDetail::where('id', $original['id'])->delete();
+                    }
+                }
+
+                // 2. Handle existing and new items
+                foreach ($this->edit_items as $idx => $item) {
+                    if ($item['id']) {
+                        // Existing item — find the matching original
+                        $original = $originalById->get($item['id']);
+                        if ($original) {
+                            if ($original['product_id'] == $item['product_id']) {
+                                // Same product: adjust stock by diff
+                                $diff = $original['quantity'] - $item['quantity'];
+                                if ($diff != 0) {
+                                    Product::where('id', $item['product_id'])->increment('current_stock', $diff);
+                                }
+                            } else {
+                                // Product changed: restore old, deduct new
+                                Product::where('id', $original['product_id'])->increment('current_stock', $original['quantity']);
+                                Product::where('id', $item['product_id'])->decrement('current_stock', $item['quantity']);
+                            }
+                            // Update detail record
+                            TransactionDetail::where('id', $item['id'])->update([
+                                'product_id' => $item['product_id'],
+                                'quantity' => $item['quantity'],
+                                'price_at_transaction' => $item['price'],
+                            ]);
+                        }
+                    } else {
+                        // New item — deduct stock and create detail
+                        Product::where('id', $item['product_id'])->decrement('current_stock', $item['quantity']);
+                        TransactionDetail::create([
+                            'transaction_id' => $transaction->id,
+                            'product_id' => $item['product_id'],
+                            'quantity' => $item['quantity'],
+                            'price_at_transaction' => $item['price'],
+                        ]);
+                    }
+                }
+
                 // Save new payments
                 foreach ($this->edit_new_payments as $payment) {
                     if ((float)($payment['amount'] ?? 0) > 0) {
@@ -296,21 +407,25 @@ class Sales extends Component
                     }
                 }
 
+                // Recalculate total_amount from edited items
+                $newTotalAmount = collect($this->edit_items)->sum(fn($item) => ((float)($item['price'] ?? 0)) * ((int)($item['quantity'] ?? 0)));
+
                 // Recalculate payment status
                 $totalPaid = $transaction->payments()->sum('amount') + collect($this->edit_new_payments)->sum(fn($p) => (float)($p['amount'] ?? 0));
-                $grandTotal = ($transaction->total_amount ?? 0) - ($transaction->discount ?? 0) + ($transaction->shipping_cost ?? 0);
+                $grandTotal = $newTotalAmount - ($transaction->discount ?? 0) + ($transaction->shipping_cost ?? 0);
                 $paymentStatus = $this->calculatePaymentStatus($totalPaid, $grandTotal);
 
                 $transaction->update([
+                    'total_amount' => $newTotalAmount,
                     'payment_status' => $paymentStatus,
-                    'down_payment' => $totalPaid, // Keep backward compat
+                    'down_payment' => $totalPaid,
                     'shipping_status' => $this->edit_shipping_status,
                     'driver_name' => $this->edit_shipping_status !== 'bawa_sendiri' ? $this->edit_driver_name : null,
                 ]);
             });
 
             $this->showEditForm = false;
-            $this->dispatch('notify', type: 'success', message: 'Status transaksi berhasil diperbarui.');
+            $this->dispatch('notify', type: 'success', message: 'Transaksi berhasil diperbarui.');
         }
     }
 
@@ -379,7 +494,9 @@ class Sales extends Component
     {
         $transaction = Transaction::find($this->editingTransactionId);
         if (!$transaction) return 0;
-        return ($transaction->total_amount ?? 0) - ($transaction->discount ?? 0) + ($transaction->shipping_cost ?? 0);
+        // Use edit_items for real-time subtotal calculation
+        $subtotal = collect($this->edit_items)->sum(fn($item) => ((float)($item['price'] ?? 0)) * ((int)($item['quantity'] ?? 0)));
+        return $subtotal - ($transaction->discount ?? 0) + ($transaction->shipping_cost ?? 0);
     }
 
     public function getEditTotalPaidProperty()

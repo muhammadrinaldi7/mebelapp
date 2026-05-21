@@ -420,7 +420,8 @@
                                 <div class="w-full sm:w-48">
                                     <label
                                         class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal
-                                        (Rp)</label>
+                                        (Rp)
+                                    </label>
                                     <div x-data="{
                                         raw: $wire.entangle('payments.{{ $pIndex }}.amount').live,
                                         displayValue: '',
@@ -656,17 +657,21 @@
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                                             </path>
                                         </svg>
-                                        Update Status
+                                        Edit
                                     </button>
-                                    <button type="button" wire:click="deleteTransaction({{ $trx->id }})" wire:confirm="Apakah Anda yakin ingin menghapus transaksi ini? Stok produk akan dikembalikan."
-                                        class="inline-flex w-full justify-center items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-700/10 hover:bg-red-100 transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                            </path>
-                                        </svg>
-                                        Hapus
-                                    </button>
+                                    @can('delete-sales')
+                                        <button type="button" wire:click="deleteTransaction({{ $trx->id }})"
+                                            wire:confirm="Apakah Anda yakin ingin menghapus transaksi ini? Stok produk akan dikembalikan."
+                                            class="inline-flex w-full justify-center items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-700/10 hover:bg-red-100 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                </path>
+                                            </svg>
+                                            Hapus
+                                        </button>
+                                    @endcan
                                     {{-- <a href="{{ route('sales.invoice', $trx->id) }}" target="_blank"
                                         class="inline-flex w-full justify-center items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-900 hover:bg-gray-800 transition-colors">
                                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -723,8 +728,8 @@
                         <div
                             class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 flex justify-between items-center">
                             <div>
-                                <h3 class="text-lg font-bold text-white">Kelola Pembayaran & Pengiriman</h3>
-                                <p class="text-indigo-100 text-sm mt-1">Update status transaksi</p>
+                                <h3 class="text-lg font-bold text-white">Edit Transaksi Penjualan</h3>
+                                <p class="text-indigo-100 text-sm mt-1">Edit item, pembayaran & pengiriman</p>
                             </div>
                             <button wire:click="$set('showEditForm', false)"
                                 class="text-indigo-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
@@ -763,6 +768,201 @@
                                     @endif
                                 </div>
                             </div>
+
+                            {{-- Daftar Item Mebel (Editable) --}}
+                            @can('edit-sales')
+                                <div>
+                                    <h4
+                                        class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                        Edit Daftar Item Mebel</h4>
+
+                                    <div class="hidden sm:flex items-center gap-3 px-1 mb-2">
+                                        <div class="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            Pilih Produk (Stok)</div>
+                                        <div class="w-24 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            Jumlah</div>
+                                        <div class="w-40 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                            Harga Satuan</div>
+                                        <div class="w-8"></div>
+                                    </div>
+
+                                    @foreach ($edit_items as $eIndex => $eItem)
+                                        <div class="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl mb-3 relative items-end"
+                                            wire:key="edit-item-{{ $eIndex }}">
+                                            <div class="flex-1 w-full">
+                                                <label
+                                                    class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Produk</label>
+                                                <div x-data="{
+                                                    open: false,
+                                                    search: '',
+                                                    selectedLabel: '',
+                                                    init() {
+                                                        const pid = @js($eItem['product_id']);
+                                                        if (pid) {
+                                                            const found = @js(
+    $products
+        ->map(
+            fn($p) => [
+                'id' => $p->id,
+                'sku' => $p->sku,
+                'name' => $p->name,
+                'stock' => $p->current_stock,
+                'price' => number_format($p->selling_price, 0, ',', '.'),
+                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
+            ],
+        )
+        ->toArray(),
+).find(p => p.id == pid);
+                                                            if (found) this.selectedLabel = found.label;
+                                                        }
+                                                    },
+                                                    get filtered() {
+                                                        const items = @js(
+    $products
+        ->map(
+            fn($p) => [
+                'id' => $p->id,
+                'sku' => $p->sku,
+                'name' => $p->name,
+                'stock' => $p->current_stock,
+                'price' => number_format($p->selling_price, 0, ',', '.'),
+                'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
+            ],
+        )
+        ->toArray(),
+);
+                                                        if (!this.search) return items;
+                                                        const s = this.search.toLowerCase();
+                                                        return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
+                                                    },
+                                                    select(product) {
+                                                        this.selectedLabel = product.label;
+                                                        this.search = '';
+                                                        this.open = false;
+                                                        $wire.set('edit_items.{{ $eIndex }}.product_id', product.id);
+                                                    },
+                                                    clear() {
+                                                        this.selectedLabel = '';
+                                                        this.search = '';
+                                                        $wire.set('edit_items.{{ $eIndex }}.product_id', '');
+                                                    }
+                                                }" @click.outside="open = false"
+                                                    class="relative">
+                                                    <div class="relative">
+                                                        <input type="text" x-show="open || !selectedLabel"
+                                                            x-ref="searchInput" x-model="search" @focus="open = true"
+                                                            @click="open = true"
+                                                            placeholder="Cari nama atau SKU produk..."
+                                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                                        <button type="button" x-show="!open && selectedLabel"
+                                                            @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 shadow-sm hover:bg-gray-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white">
+                                                            <span
+                                                                x-text="selectedLabel.length > 50 ? selectedLabel.substring(0, 50) + '...' : selectedLabel"
+                                                                class="truncate block"></span>
+                                                        </button>
+                                                        <button type="button" x-show="selectedLabel" @click="clear()"
+                                                            class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path
+                                                                    d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div x-show="open" x-cloak
+                                                        class="absolute z-50 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
+                                                        <template x-for="product in filtered" :key="product.id">
+                                                            <button type="button" @click="select(product)"
+                                                                class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-blue-50 focus:bg-blue-50 transition-colors last:border-0">
+                                                                <div class="text-sm font-semibold text-gray-900"
+                                                                    x-text="product.name"></div>
+                                                                <div
+                                                                    class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                                    <span x-text="product.sku"
+                                                                        class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
+                                                                    <span>Stok: <span x-text="product.stock"
+                                                                            class="font-medium text-gray-700"></span></span>
+                                                                    <span class="text-gray-300">|</span>
+                                                                    <span class="font-medium text-blue-600">Rp <span
+                                                                            x-text="product.price"></span></span>
+                                                                </div>
+                                                            </button>
+                                                        </template>
+                                                        <div x-show="filtered.length === 0"
+                                                            class="px-3 py-3 text-sm text-gray-400 italic text-center">
+                                                            Produk tidak ditemukan
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @error('edit_items.' . $eIndex . '.product_id')
+                                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                            <div class="w-full sm:w-24">
+                                                <label
+                                                    class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qty</label>
+                                                <input wire:model.live="edit_items.{{ $eIndex }}.quantity"
+                                                    type="number" min="1"
+                                                    class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                                @error('edit_items.' . $eIndex . '.quantity')
+                                                    <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                            <div class="w-full sm:w-40">
+                                                <label
+                                                    class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Harga
+                                                    Satuan (Rp)</label>
+                                                <div x-data="{
+                                                    raw: $wire.entangle('edit_items.{{ $eIndex }}.price').live,
+                                                    displayValue: '',
+                                                    init() {
+                                                        this.$watch('raw', value => {
+                                                            if (value !== undefined && value !== null && value !== '') {
+                                                                this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                            } else {
+                                                                this.displayValue = '';
+                                                            }
+                                                        });
+                                                        if (this.raw !== undefined && this.raw !== null && this.raw !== '') {
+                                                            this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                        }
+                                                    },
+                                                    updateValue(val) {
+                                                        let rawVal = val.toString().replace(/\D/g, '');
+                                                        this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                        this.raw = rawVal;
+                                                    }
+                                                }">
+                                                    <input type="text" x-model="displayValue"
+                                                        x-on:input="updateValue($event.target.value)"
+                                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                        placeholder="0">
+                                                </div>
+                                            </div>
+                                            @if (count($edit_items) > 1)
+                                                <button type="button" wire:click="removeEditItem({{ $eIndex }})"
+                                                    class="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                                        stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    @endforeach
+
+                                    <button type="button" wire:click="addEditItem"
+                                        class="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-500 bg-blue-50 px-4 py-2 rounded-xl transition-colors">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        Tambah Item Lain
+                                    </button>
+                                </div>
+                            @endcan
 
                             {{-- Riwayat Pembayaran yang Sudah Tersimpan --}}
                             @if (count($edit_existing_payments) > 0)
