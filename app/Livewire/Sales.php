@@ -515,7 +515,11 @@ class Sales extends Component
     {
         $transactions = Transaction::with('user', 'details.product', 'payments')
             ->where('type', 'sale')
-            ->when($this->search, fn($q) => $q->where('reference_code', 'like', '%' . $this->search . '%'))
+            ->when(
+                $this->search,
+                fn($q) => $q->where('reference_code', 'like', '%' . $this->search . '%')
+                    ->orWhere('customer_name', 'like', '%' . $this->search . '%')
+            )
             ->latest('transaction_date')
             ->paginate(10);
 
