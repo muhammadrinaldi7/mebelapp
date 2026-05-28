@@ -29,6 +29,9 @@ class Sales extends Component
     public $notes = '';
     public $items = [];
 
+    public $start_date = '';
+    public $end_date = '';
+
     // Customer & Financial Additions
     public $customer_name = '';
     public $customer_phone = '';
@@ -156,7 +159,7 @@ class Sales extends Component
 
     public function addEditPayment()
     {
-        $this->edit_new_payments[] = ['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0];
+        $this->edit_new_payments[] = ['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0, 'payment_date' => now()->format('Y-m-d')];
     }
 
     public function removeEditPayment($index)
@@ -318,6 +321,7 @@ class Sales extends Component
         if (count($this->edit_new_payments) > 0) {
             $rules['edit_new_payments.*.payment_method_id'] = 'required|exists:payment_methods,id';
             $rules['edit_new_payments.*.amount'] = 'required|numeric|min:1';
+            $rules['edit_new_payments.*.payment_date'] = 'required|date';
         }
 
         $this->validate($rules);
@@ -401,7 +405,7 @@ class Sales extends Component
                             'transaction_id' => $transaction->id,
                             'payment_method_id' => $payment['payment_method_id'],
                             'amount' => $payment['amount'],
-                            'payment_date' => now()->format('Y-m-d'),
+                            'payment_date' => $payment['payment_date'] ?? now()->format('Y-m-d'),
                             'notes' => null,
                         ]);
                     }
@@ -520,6 +524,8 @@ class Sales extends Component
                 fn($q) => $q->where('reference_code', 'like', '%' . $this->search . '%')
                     ->orWhere('customer_name', 'like', '%' . $this->search . '%')
             )
+            ->when($this->start_date, fn($q) => $q->whereDate('transaction_date', '>=', $this->start_date))
+            ->when($this->end_date, fn($q) => $q->whereDate('transaction_date', '<=', $this->end_date))
             ->latest('transaction_date')
             ->paginate(10);
 

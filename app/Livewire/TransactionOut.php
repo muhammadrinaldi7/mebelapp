@@ -111,6 +111,8 @@ class TransactionOut extends Component
                 'satuan' => $detail->product->satuan ?? '-',
                 'quantity' => $detail->quantity,
                 'current_stock' => $detail->product->current_stock ?? 0,
+                'original_product_id' => $detail->product_id,
+                'original_quantity' => $detail->quantity,
             ];
         }
         $this->showEditForm = true;
@@ -125,22 +127,16 @@ class TransactionOut extends Component
         $rules = [
             'edit_reference_code' => 'required|string|max:255',
             'edit_transaction_date' => 'required|date',
+            'edit_items.*.product_id' => 'required|exists:products,id',
             'edit_items.*.quantity' => 'required|integer|min:1',
         ];
 
-        // Ensure new items have a selected product
-        foreach ($this->edit_items as $index => $item) {
-            if (empty($item['id'])) {
-                $rules["edit_items.{$index}.product_id"] = 'required|exists:products,id';
-            }
-        }
-
         $this->validate($rules);
 
-        // Validate stock availability for qty increases and new items
+        // Validate stock availability for qty increases, new items, and product swaps
         foreach ($this->edit_items as $item) {
             if (empty($item['id'])) {
-                // New item added, check if stock is sufficient for the whole quantity
+                // New item added
                 $product = Product::find($item['product_id']);
                 if ($product && $product->current_stock < $item['quantity']) {
                     $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan: {$item['quantity']}");
@@ -149,15 +145,24 @@ class TransactionOut extends Component
             } else {
                 $detail = TransactionDetail::find($item['id']);
                 if ($detail) {
-                    $oldQty = $detail->quantity;
-                    $newQty = $item['quantity'];
-                    $diff = $newQty - $oldQty;
+                    $origProdId = $item['original_product_id'] ?? $detail->product_id;
+                    $origQty = $item['original_quantity'] ?? $detail->quantity;
 
-                    if ($diff > 0) {
-                        // More items going out, check if stock is sufficient
-                        $product = Product::find($detail->product_id);
-                        if ($product && $product->current_stock < $diff) {
-                            $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan tambahan: {$diff}");
+                    if ($origProdId == $item['product_id']) {
+                        // Same product
+                        $diff = $item['quantity'] - $origQty;
+                        if ($diff > 0) {
+                            $product = Product::find($detail->product_id);
+                            if ($product && $product->current_stock < $diff) {
+                                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi. Tersedia: {$product->current_stock}, dibutuhkan tambahan: {$diff}");
+                                return;
+                            }
+                        }
+                    } else {
+                        // Product changed: check new product has enough stock
+                        $newProduct = Product::find($item['product_id']);
+                        if ($newProduct && $newProduct->current_stock < $item['quantity']) {
+                            $this->dispatch('notify', type: 'error', message: "Stok {$newProduct->name} tidak mencukupi. Tersedia: {$newProduct->current_stock}, dibutuhkan: {$item['quantity']}");
                             return;
                         }
                     }
@@ -184,13 +189,14 @@ class TransactionOut extends Component
                         'transaction_id' => $this->edit_transaction_id,
                         'product_id' => $item['product_id'],
                         'quantity' => $item['quantity'],
-                        'price_at_transaction' => 0, // Outbound doesn't track selling price here
+                        'price_at_transaction' => 0,
                     ]);
                 } else {
                     $detail = TransactionDetail::find($item['id']);
                     if ($detail) {
                         // Observer `updating` will handle stock adjustment automatically
                         $detail->update([
+                            'product_id' => $item['product_id'],
                             'quantity' => $item['quantity'],
                         ]);
                     }

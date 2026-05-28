@@ -17,6 +17,7 @@ use App\Livewire\ProductDetail;
 use App\Livewire\StockOpnameIndex;
 use App\Livewire\StockOpnameForm;
 use App\Livewire\PaymentMethodIndex;
+use App\Livewire\PaymentMethodReport;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -50,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/users', UserManagement::class)->name('users.index');
         Route::get('/roles', RoleManagement::class)->name('roles.index');
         Route::get('/expenses', ExpenseIndex::class)->name('expenses.index');
+        Route::get('/payment-method-report', PaymentMethodReport::class)->name('payment-method-report');
         Route::get('/payment-methods', PaymentMethodIndex::class)->name('payment-methods.index');
     });
 });

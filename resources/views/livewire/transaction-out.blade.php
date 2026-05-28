@@ -409,72 +409,132 @@
                             {{-- Editable Detail Items --}}
                             <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
                                 Rincian Barang</h4>
-                            <div class="overflow-x-auto rounded-xl border border-gray-200 mb-6">
-                                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-4 py-3 text-left font-semibold text-gray-600 w-12">No</th>
-                                            <th class="px-4 py-3 text-left font-semibold text-gray-600">Produk</th>
-                                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Satuan</th>
-                                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Stok</th>
-                                            <th class="px-4 py-3 text-center font-semibold text-gray-600 w-24">Qty</th>
-                                            <th class="px-4 py-3 text-center font-semibold text-gray-600 w-12">Hapus</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200 bg-white">
-                                        @foreach ($edit_items as $index => $item)
-                                            <tr>
-                                                <td class="px-4 py-3 text-gray-500">{{ $index + 1 }}</td>
-                                                <td class="px-4 py-3">
-                                                    @if(empty($item['id']))
-                                                        <select wire:model.live="edit_items.{{ $index }}.product_id"
-                                                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600">
-                                                            <option value="">Pilih Produk...</option>
-                                                            @foreach ($products as $product)
-                                                                <option value="{{ $product->id }}">
-                                                                    {{ $product->sku }} - {{ $product->name }} (Stok: {{ $product->current_stock }})
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                        @error("edit_items.{$index}.product_id")
-                                                            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                                                        @enderror
-                                                    @else
-                                                        <div class="font-medium text-gray-900 line-clamp-2 max-w-[250px]" title="{{ $item['product_name'] }}">
-                                                            {{ $item['product_name'] }}
-                                                        </div>
-                                                    @endif
-                                                </td>
-                                                <td class="px-4 py-3 text-center text-gray-600">
-                                                    {{ $item['satuan'] }}</td>
-                                                <td class="px-4 py-3 text-center">
-                                                    <span
-                                                        class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
-                                                        {{ $item['current_stock'] }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-4 py-2 text-center">
-                                                    <input type="number" min="1"
-                                                        wire:model="edit_items.{{ $index }}.quantity"
-                                                        class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-center text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600 mx-auto block">
-                                                    @error("edit_items.{$index}.quantity")
-                                                        <span class="text-red-500 text-xs block mt-1">{{ $message }}</span>
-                                                    @enderror
-                                                </td>
-                                                <td class="px-4 py-3 text-center">
-                                                    <button type="button"
-                                                        wire:click="removeEditItem({{ $index }})"
-                                                        class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg p-2 transition-colors inline-flex justify-center items-center" title="Hapus Produk">
-                                                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                            <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+
+                            <div class="hidden sm:flex items-center gap-3 px-1 mb-2">
+                                <div class="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                    Pilih Produk (Stok)</div>
+                                <div class="w-24 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">
+                                    Jumlah</div>
+                                <div class="w-10"></div>
                             </div>
+
+                            @foreach ($edit_items as $index => $item)
+                                <div class="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl mb-3 relative items-end"
+                                    wire:key="edit-item-{{ $index }}">
+                                    <div class="flex-1 w-full">
+                                        <label
+                                            class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Produk</label>
+                                        <div x-data="{
+                                            open: false,
+                                            search: '',
+                                            selectedLabel: '',
+                                            init() {
+                                                const pid = @js($item['product_id'] ?? '');
+                                                if (pid) {
+                                                    const found = @js($products->map(fn($p) => [
+                                                        'id' => $p->id,
+                                                        'sku' => $p->sku,
+                                                        'name' => $p->name,
+                                                        'stock' => $p->current_stock,
+                                                        'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
+                                                    ])->toArray()).find(p => p.id == pid);
+                                                    if (found) this.selectedLabel = found.label;
+                                                    else this.selectedLabel = @js(($item['product_name'] ?? '') . ' (stok: ' . ($item['current_stock'] ?? 0) . ')');
+                                                }
+                                            },
+                                            get filtered() {
+                                                const items = @js($products->map(fn($p) => [
+                                                    'id' => $p->id,
+                                                    'sku' => $p->sku,
+                                                    'name' => $p->name,
+                                                    'stock' => $p->current_stock,
+                                                    'label' => '[' . $p->sku . '] ' . $p->name . ' (stok: ' . $p->current_stock . ')',
+                                                ])->toArray());
+                                                if (!this.search) return items;
+                                                const s = this.search.toLowerCase();
+                                                return items.filter(p => p.name.toLowerCase().includes(s) || (p.sku && p.sku.toLowerCase().includes(s)));
+                                            },
+                                            select(product) {
+                                                this.selectedLabel = product.label;
+                                                this.search = '';
+                                                this.open = false;
+                                                $wire.set('edit_items.{{ $index }}.product_id', product.id);
+                                            },
+                                            clear() {
+                                                this.selectedLabel = '';
+                                                this.search = '';
+                                                $wire.set('edit_items.{{ $index }}.product_id', '');
+                                            }
+                                        }" @click.outside="open = false" class="relative">
+                                            <div class="relative">
+                                                <input type="text" x-show="open || !selectedLabel"
+                                                    x-ref="searchInput" x-model="search" @focus="open = true"
+                                                    @click="open = true"
+                                                    placeholder="Cari nama atau SKU produk..."
+                                                    class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-orange-600" />
+                                                <button type="button" x-show="!open && selectedLabel"
+                                                    @click="open = true; $nextTick(() => $refs.searchInput.focus())"
+                                                    class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-left text-sm text-gray-900 shadow-sm hover:bg-gray-50 bg-white">
+                                                    <span
+                                                        x-text="selectedLabel.length > 50 ? selectedLabel.substring(0, 50) + '...' : selectedLabel"
+                                                        class="truncate block"></span>
+                                                </button>
+                                                <button type="button" x-show="selectedLabel" @click="clear()"
+                                                    class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path
+                                                            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div x-show="open" x-cloak
+                                                class="absolute z-50 mt-1 w-full rounded-lg bg-white shadow-lg ring-1 ring-black/5 max-h-48 overflow-y-auto">
+                                                <template x-for="product in filtered" :key="product.id">
+                                                    <button type="button" @click="select(product)"
+                                                        class="block w-full px-3 py-2.5 text-left border-b border-gray-50 hover:bg-orange-50 hover:text-orange-700 transition-colors last:border-0">
+                                                        <div class="text-sm font-semibold text-gray-900" x-text="product.name"></div>
+                                                        <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                            <span x-text="product.sku"
+                                                                class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-600"></span>
+                                                            <span>Stok: <span x-text="product.stock"
+                                                                    class="font-medium text-gray-700"></span></span>
+                                                        </div>
+                                                    </button>
+                                                </template>
+                                                <div x-show="filtered.length === 0"
+                                                    class="px-3 py-3 text-sm text-gray-400 italic text-center">
+                                                    Produk tidak ditemukan
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @error('edit_items.' . $index . '.product_id')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="w-full sm:w-24">
+                                        <label
+                                            class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qty</label>
+                                        <input wire:model="edit_items.{{ $index }}.quantity" type="number"
+                                            min="1"
+                                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm text-center focus:ring-2 focus:ring-orange-600">
+                                        @error('edit_items.' . $index . '.quantity')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    @if (count($edit_items) > 1)
+                                        <button type="button"
+                                            wire:click="removeEditItem({{ $index }})"
+                                            class="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    @endif
+                                </div>
+                            @endforeach
+
                             <button type="button" wire:click="addEditItem"
                                 class="text-sm text-orange-600 hover:text-orange-500 font-medium inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
