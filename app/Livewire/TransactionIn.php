@@ -118,11 +118,14 @@ class TransactionIn extends Component
         foreach ($transaction->details as $detail) {
             $this->edit_items[] = [
                 'id' => $detail->id,
+                'product_id' => $detail->product_id,
                 'sku' => $detail->product->sku ?? '-',
                 'product_name' => $detail->product->name ?? 'Produk Terhapus',
                 'satuan' => $detail->product->satuan ?? '-',
                 'quantity' => $detail->quantity,
                 'price' => $detail->price_at_transaction,
+                'original_product_id' => $detail->product_id,
+                'original_quantity' => $detail->quantity,
             ];
         }
         $this->showEditForm = true;
@@ -137,15 +140,9 @@ class TransactionIn extends Component
         $rules = [
             'edit_reference_code' => 'required|string|max:255',
             'edit_transaction_date' => 'required|date',
+            'edit_items.*.product_id' => 'required|exists:products,id',
             'edit_items.*.quantity' => 'required|integer|min:1',
         ];
-
-        // Ensure new items have a selected product
-        foreach ($this->edit_items as $index => $item) {
-            if (empty($item['id'])) {
-                $rules["edit_items.{$index}.product_id"] = 'required|exists:products,id';
-            }
-        }
 
         if (Auth::user()->hasRole('admin')) {
             $rules['edit_items.*.price'] = 'required|numeric|min:0';
@@ -153,20 +150,32 @@ class TransactionIn extends Component
 
         $this->validate($rules);
 
-        // Validate stock availability for qty decreases (since it's Barang Masuk, decreasing qty decreases stock)
+        // Validate stock for qty decreases and product swaps
         foreach ($this->edit_items as $item) {
-            $detail = TransactionDetail::find($item['id']);
-            if ($detail) {
-                $oldQty = $detail->quantity;
-                $newQty = $item['quantity'];
-                $diff = $newQty - $oldQty;
+            if (!empty($item['id'])) {
+                $detail = TransactionDetail::find($item['id']);
+                if ($detail) {
+                    $origProdId = $item['original_product_id'] ?? $detail->product_id;
+                    $origQty = $item['original_quantity'] ?? $detail->quantity;
 
-                if ($diff < 0) {
-                    $reduction = abs($diff);
-                    $product = \App\Models\Product::find($detail->product_id);
-                    if ($product && $product->current_stock < $reduction) {
-                        $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi untuk dikurangi. Tersedia: {$product->current_stock}, akan dikurangi: {$reduction}");
-                        return;
+                    if ($origProdId == $item['product_id']) {
+                        // Same product, check if qty decreased
+                        $diff = $item['quantity'] - $origQty;
+                        if ($diff < 0) {
+                            $reduction = abs($diff);
+                            $product = Product::find($detail->product_id);
+                            if ($product && $product->current_stock < $reduction) {
+                                $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi untuk dikurangi. Tersedia: {$product->current_stock}, akan dikurangi: {$reduction}");
+                                return;
+                            }
+                        }
+                    } else {
+                        // Product changed: old product stock must handle removal
+                        $oldProduct = Product::find($origProdId);
+                        if ($oldProduct && $oldProduct->current_stock < $origQty) {
+                            $this->dispatch('notify', type: 'error', message: "Stok {$oldProduct->name} tidak mencukupi untuk dipindahkan. Tersedia: {$oldProduct->current_stock}, dibutuhkan: {$origQty}");
+                            return;
+                        }
                     }
                 }
             }
@@ -180,7 +189,7 @@ class TransactionIn extends Component
         foreach ($deletedDetailIds as $deletedId) {
             $detail = TransactionDetail::find($deletedId);
             if ($detail) {
-                $product = \App\Models\Product::find($detail->product_id);
+                $product = Product::find($detail->product_id);
                 if ($product && $product->current_stock < $detail->quantity) {
                     $this->dispatch('notify', type: 'error', message: "Stok {$product->name} tidak mencukupi untuk dihapus. Tersedia: {$product->current_stock}, akan dikurangi: {$detail->quantity}");
                     return;
@@ -202,7 +211,7 @@ class TransactionIn extends Component
                 if (empty($item['id'])) {
                     // Create new detail
                     $price = Auth::user()->hasRole('admin') && isset($item['price']) ? $item['price'] : 0;
-                    $detail = TransactionDetail::create([
+                    TransactionDetail::create([
                         'transaction_id' => $this->edit_transaction_id,
                         'product_id' => $item['product_id'],
                         'quantity' => $item['quantity'],
@@ -214,9 +223,10 @@ class TransactionIn extends Component
                     $detail = TransactionDetail::find($item['id']);
                     if ($detail) {
                         $updateData = [
+                            'product_id' => $item['product_id'],
                             'quantity' => $item['quantity'],
                         ];
-                        
+
                         if (Auth::user()->hasRole('admin') && isset($item['price'])) {
                             $updateData['price_at_transaction'] = $item['price'];
                             $totalAmount += ($item['quantity'] * $item['price']);

@@ -523,8 +523,17 @@
         </div>
     @endif
 
+    {{-- Transaction History --}}
+    {{-- <div class="flex flex-row mt-5 items-center justify-between">
+        <div class="">
+            <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cari kode referensi..."
+                class="block w-full sm:w-64 bg-white rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+        </div>
+       
+    </div> --}}
+
     {{-- Daftar Penjualan --}}
-    <div class="mt-8 flex items-center gap-3">
+    <div class="mt-8 flex flex-row items-center justify-between gap-3">
         <label for="search" class="sr-only">Cari</label>
         <div class="relative rounded-md shadow-sm">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -537,6 +546,15 @@
             <input wire:model.live.debounce.300ms="search" type="text" id="search"
                 placeholder="Cari nota / pembeli..."
                 class="block w-full sm:w-72 rounded-xl border border-gray-300 py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        </div>
+        <div class="flex flex-row items-center gap-2">
+            <input type="date" wire:model.live.debounce.300ms="start_date"
+                class="bg-white rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+            <input type="date" wire:model.live.debounce.300ms="end_date"
+                class="bg-white rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+            {{-- <a href="{{ route('report.export', ['type' => 'pdf', 'tab' => 'movement', 'from' => $this->start_date, 'to' => $this->end_date, 'mt' => 'in']) }}"
+                target="_blank"
+                class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">PDF</a> --}}
         </div>
     </div>
 
@@ -1011,6 +1029,7 @@
                                             <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
                                                 wire:key="edit-payment-{{ $npIndex }}">
                                                 <div class="flex-1">
+                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Metode</label>
                                                     <select
                                                         wire:model="edit_new_payments.{{ $npIndex }}.payment_method_id"
                                                         class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
@@ -1024,7 +1043,17 @@
                                                         <span class="text-red-500 text-xs">{{ $message }}</span>
                                                     @enderror
                                                 </div>
+                                                <div class="w-full sm:w-40">
+                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tanggal</label>
+                                                    <input type="date"
+                                                        wire:model="edit_new_payments.{{ $npIndex }}.payment_date"
+                                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                                    @error("edit_new_payments.{$npIndex}.payment_date")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
                                                 <div class="w-full sm:w-48">
+                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal</label>
                                                     <div x-data="{
                                                         raw: $wire.entangle('edit_new_payments.{{ $npIndex }}.amount'),
                                                         displayValue: '',
@@ -1057,7 +1086,7 @@
                                                 </div>
                                                 <button type="button"
                                                     wire:click="removeEditPayment({{ $npIndex }})"
-                                                    class="self-center bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
+                                                    class="self-end mb-1 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg p-2 transition-colors">
                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                                         stroke-width="2" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
