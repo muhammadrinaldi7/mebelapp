@@ -73,6 +73,7 @@ class Sales extends Component
         'items.*.quantity' => 'required|integer|min:1',
         'items.*.price' => 'required|numeric|min:0',
         'payments' => 'required|array|min:1',
+        'payments.*.payment_date' => 'required|date',
         'payments.*.payment_method_id' => 'required|exists:payment_methods,id',
         'payments.*.amount' => 'required|numeric|min:1',
     ];
@@ -89,7 +90,7 @@ class Sales extends Component
     {
         $this->transaction_date = now()->format('Y-m-d');
         $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
-        $this->payments = [['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0]];
+        $this->payments = [['payment_date' => now()->format('Y-m-d'), 'payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0]];
     }
 
     public function updatingSearch()
@@ -113,7 +114,7 @@ class Sales extends Component
         $this->shipping_status = 'bawa_sendiri';
         $this->driver_name = '';
         $this->items = [['product_id' => '', 'quantity' => 1, 'price' => 0]];
-        $this->payments = [['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0]];
+        $this->payments = [['payment_date' => now()->format('Y-m-d'), 'payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0]];
         $this->showForm = true;
     }
 
@@ -146,7 +147,7 @@ class Sales extends Component
 
     public function addPayment()
     {
-        $this->payments[] = ['payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0];
+        $this->payments[] = ['payment_date' => now()->format('Y-m-d'), 'payment_method_id' => $this->getDefaultPaymentMethodId(), 'amount' => 0];
     }
 
     public function removePayment($index)
@@ -262,7 +263,7 @@ class Sales extends Component
                         'transaction_id' => $transaction->id,
                         'payment_method_id' => $payment['payment_method_id'],
                         'amount' => $payment['amount'],
-                        'payment_date' => $this->transaction_date,
+                        'payment_date' => $payment['payment_date'],
                         'notes' => null,
                     ]);
                 }

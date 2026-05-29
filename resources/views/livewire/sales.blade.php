@@ -402,6 +402,13 @@
                         @foreach ($payments as $pIndex => $payment)
                             <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
                                 wire:key="payment-{{ $pIndex }}">
+                                <div class="w-full sm:w-40">
+                                    <input type="date" wire:model.live="payments.{{ $pIndex }}.payment_date"
+                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                    @error("payments.{$pIndex}.payment_date")
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
                                 <div class="flex-1">
                                     <label
                                         class="sm:hidden block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Metode
@@ -1029,7 +1036,8 @@
                                             <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
                                                 wire:key="edit-payment-{{ $npIndex }}">
                                                 <div class="flex-1">
-                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Metode</label>
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Metode</label>
                                                     <select
                                                         wire:model="edit_new_payments.{{ $npIndex }}.payment_method_id"
                                                         class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
@@ -1044,7 +1052,8 @@
                                                     @enderror
                                                 </div>
                                                 <div class="w-full sm:w-40">
-                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tanggal</label>
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tanggal</label>
                                                     <input type="date"
                                                         wire:model="edit_new_payments.{{ $npIndex }}.payment_date"
                                                         class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
@@ -1053,7 +1062,8 @@
                                                     @enderror
                                                 </div>
                                                 <div class="w-full sm:w-48">
-                                                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal</label>
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal</label>
                                                     <div x-data="{
                                                         raw: $wire.entangle('edit_new_payments.{{ $npIndex }}.amount'),
                                                         displayValue: '',
