@@ -747,14 +747,14 @@
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                     <div
-                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
 
                         {{-- Header --}}
                         <div
                             class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 flex justify-between items-center">
                             <div>
                                 <h3 class="text-lg font-bold text-white">Edit Transaksi Penjualan</h3>
-                                <p class="text-indigo-100 text-sm mt-1">Edit item, pembayaran & pengiriman</p>
+                                <p class="text-indigo-100 text-sm mt-1">{{ $edit_reference_code }}</p>
                             </div>
                             <button wire:click="$set('showEditForm', false)"
                                 class="text-indigo-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
@@ -766,6 +766,129 @@
                         </div>
 
                         <div class="p-6 space-y-6">
+
+                            {{-- Informasi Transaksi (Editable Header) --}}
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <h4
+                                    class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
+                                    Informasi Transaksi</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Kode
+                                            Nota</label>
+                                        <input type="text" wire:model="edit_reference_code"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                        @error('edit_reference_code')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Tanggal</label>
+                                        <input type="date" wire:model="edit_transaction_date"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                        @error('edit_transaction_date')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Sales</label>
+                                        <input type="text" wire:model="edit_salesperson_name"
+                                            placeholder="Nama sales"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    </div>
+                                    {{-- <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Nama
+                                            Pembeli</label>
+                                        <input type="text" wire:model="edit_customer_name" placeholder="Nama pembeli"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">No.
+                                            Telepon</label>
+                                        <input type="text" wire:model="edit_customer_phone" placeholder="08xxxxxxxxxx"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Alamat</label>
+                                        <input type="text" wire:model="edit_customer_address"
+                                            placeholder="Alamat pengiriman"
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Diskon
+                                            (Rp)</label>
+                                        <div x-data="{
+                                            raw: $wire.entangle('edit_discount'),
+                                            displayValue: '',
+                                            init() {
+                                                this.$watch('raw', value => {
+                                                    if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                        this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                    } else {
+                                                        this.displayValue = '';
+                                                    }
+                                                });
+                                                if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                }
+                                            },
+                                            updateValue(val) {
+                                                let rawVal = val.toString().replace(/\D/g, '');
+                                                this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                this.raw = rawVal;
+                                            }
+                                        }">
+                                            <input type="text" x-model="displayValue"
+                                                x-on:input="updateValue($event.target.value)" placeholder="0"
+                                                class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Ongkir
+                                            (Rp)</label>
+                                        <div x-data="{
+                                            raw: $wire.entangle('edit_shipping_cost'),
+                                            displayValue: '',
+                                            init() {
+                                                this.$watch('raw', value => {
+                                                    if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                        this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                    } else {
+                                                        this.displayValue = '';
+                                                    }
+                                                });
+                                                if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                }
+                                            },
+                                            updateValue(val) {
+                                                let rawVal = val.toString().replace(/\D/g, '');
+                                                this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                this.raw = rawVal;
+                                            }
+                                        }">
+                                            <input type="text" x-model="displayValue"
+                                                x-on:input="updateValue($event.target.value)" placeholder="0"
+                                                class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                        </div>
+                                    </div>
+                                    <div class="sm:col-span-2 lg:col-span-3">
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Catatan</label>
+                                        <input type="text" wire:model="edit_notes" placeholder="Catatan tambahan..."
+                                            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-600">
+                                    </div> --}}
+                                </div>
+                            </div>
+
                             {{-- Ringkasan Tagihan --}}
                             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
                                 <div class="flex justify-between items-center mb-2">
