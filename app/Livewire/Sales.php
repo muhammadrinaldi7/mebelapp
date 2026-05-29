@@ -48,6 +48,15 @@ class Sales extends Component
     public $payments = [];
 
     // Edit Specific
+    public $edit_reference_code = '';
+    public $edit_transaction_date = '';
+    public $edit_notes = '';
+    public $edit_customer_name = '';
+    public $edit_customer_phone = '';
+    public $edit_customer_address = '';
+    public $edit_salesperson_name = '';
+    public $edit_discount = 0;
+    public $edit_shipping_cost = 0;
     public $edit_shipping_status = 'bawa_sendiri';
     public $edit_driver_name = '';
     public $edit_existing_payments = []; // Pembayaran yang sudah tersimpan (readonly)
@@ -279,6 +288,17 @@ class Sales extends Component
         $transaction = Transaction::with(['payments.paymentMethod', 'details'])->find($id);
         if ($transaction) {
             $this->editingTransactionId = $transaction->id;
+
+            // Load header info for editing
+            $this->edit_reference_code = $transaction->reference_code;
+            $this->edit_transaction_date = $transaction->transaction_date->format('Y-m-d');
+            $this->edit_notes = $transaction->notes ?: '';
+            $this->edit_customer_name = $transaction->customer_name ?: '';
+            $this->edit_customer_phone = $transaction->customer_phone ?: '';
+            $this->edit_customer_address = $transaction->customer_address ?: '';
+            $this->edit_salesperson_name = $transaction->salesperson_name ?: '';
+            $this->edit_discount = $transaction->discount ?: 0;
+            $this->edit_shipping_cost = $transaction->shipping_cost ?: 0;
             $this->edit_shipping_status = $transaction->shipping_status ?? 'bawa_sendiri';
             $this->edit_driver_name = $transaction->driver_name ?? '';
 
@@ -311,6 +331,14 @@ class Sales extends Component
     public function updateStatus()
     {
         $rules = [
+            'edit_reference_code' => 'required|string|max:255',
+            'edit_transaction_date' => 'required|date',
+            'edit_customer_name' => 'nullable|string|max:255',
+            'edit_customer_phone' => 'nullable|string|max:50',
+            'edit_customer_address' => 'nullable|string',
+            'edit_salesperson_name' => 'nullable|string|max:255',
+            'edit_discount' => 'nullable|numeric|min:0',
+            'edit_shipping_cost' => 'nullable|numeric|min:0',
             'edit_shipping_status' => 'required|in:bawa_sendiri,menunggu_dikirim,sedang_dikirim,sudah_diterima',
             'edit_driver_name' => 'nullable|string|max:255',
             'edit_items' => 'required|array|min:1',
@@ -415,13 +443,24 @@ class Sales extends Component
                 // Recalculate total_amount from edited items
                 $newTotalAmount = collect($this->edit_items)->sum(fn($item) => ((float)($item['price'] ?? 0)) * ((int)($item['quantity'] ?? 0)));
 
-                // Recalculate payment status
+                // Recalculate payment status using edited discount & shipping cost
+                $editDiscount = (float)($this->edit_discount ?: 0);
+                $editShippingCost = (float)($this->edit_shipping_cost ?: 0);
                 $totalPaid = $transaction->payments()->sum('amount') + collect($this->edit_new_payments)->sum(fn($p) => (float)($p['amount'] ?? 0));
-                $grandTotal = $newTotalAmount - ($transaction->discount ?? 0) + ($transaction->shipping_cost ?? 0);
+                $grandTotal = $newTotalAmount - $editDiscount + $editShippingCost;
                 $paymentStatus = $this->calculatePaymentStatus($totalPaid, $grandTotal);
 
                 $transaction->update([
+                    'reference_code' => $this->edit_reference_code,
+                    'transaction_date' => $this->edit_transaction_date,
+                    'notes' => $this->edit_notes,
+                    'customer_name' => $this->edit_customer_name,
+                    'customer_phone' => $this->edit_customer_phone,
+                    'customer_address' => $this->edit_customer_address,
+                    'salesperson_name' => $this->edit_salesperson_name,
                     'total_amount' => $newTotalAmount,
+                    'discount' => $editDiscount,
+                    'shipping_cost' => $editShippingCost,
                     'payment_status' => $paymentStatus,
                     'down_payment' => $totalPaid,
                     'shipping_status' => $this->edit_shipping_status,
@@ -497,11 +536,9 @@ class Sales extends Component
 
     public function getEditGrandTotalProperty()
     {
-        $transaction = Transaction::find($this->editingTransactionId);
-        if (!$transaction) return 0;
         // Use edit_items for real-time subtotal calculation
         $subtotal = collect($this->edit_items)->sum(fn($item) => ((float)($item['price'] ?? 0)) * ((int)($item['quantity'] ?? 0)));
-        return $subtotal - ($transaction->discount ?? 0) + ($transaction->shipping_cost ?? 0);
+        return $subtotal - ((float)($this->edit_discount ?: 0)) + ((float)($this->edit_shipping_cost ?: 0));
     }
 
     public function getEditTotalPaidProperty()
