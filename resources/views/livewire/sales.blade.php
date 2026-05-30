@@ -1118,32 +1118,82 @@
                                     <h4
                                         class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-200 pb-2">
                                         Riwayat Pembayaran</h4>
-                                    <div class="overflow-x-auto rounded-xl border border-gray-200">
-                                        <table class="min-w-full divide-y divide-gray-200 text-sm">
-                                            <thead class="bg-gray-50">
-                                                <tr>
-                                                    <th class="px-4 py-2 text-left font-semibold text-gray-600">Tanggal
-                                                    </th>
-                                                    <th class="px-4 py-2 text-left font-semibold text-gray-600">Metode
-                                                    </th>
-                                                    <th class="px-4 py-2 text-right font-semibold text-gray-600">
-                                                        Nominal</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-gray-200 bg-white">
-                                                @foreach ($edit_existing_payments as $ep)
-                                                    <tr>
-                                                        <td class="px-4 py-2 text-gray-600">
-                                                            {{ $ep['payment_date'] }}</td>
-                                                        <td class="px-4 py-2 text-gray-900 font-medium">
-                                                            {{ $ep['method_name'] }}</td>
-                                                        <td class="px-4 py-2 text-right font-semibold text-gray-900">
-                                                            Rp
-                                                            {{ number_format($ep['amount'], 0, ',', '.') }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
+                                    <div class="space-y-3">
+                                        @foreach ($edit_existing_payments as $epIndex => $ep)
+                                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50/50 rounded-xl border border-gray-200 relative pr-10"
+                                                wire:key="edit-existing-payment-{{ $epIndex }}">
+                                                <div class="flex-1">
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Metode</label>
+                                                    <select
+                                                        wire:model="edit_existing_payments.{{ $epIndex }}.payment_method_id"
+                                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                                        <option value="">Pilih Metode...</option>
+                                                        @foreach ($paymentMethods as $pm)
+                                                            <option value="{{ $pm->id }}">{{ $pm->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error("edit_existing_payments.{$epIndex}.payment_method_id")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                                <div class="w-full sm:w-40">
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tanggal</label>
+                                                    <input type="date"
+                                                        wire:model="edit_existing_payments.{{ $epIndex }}.payment_date"
+                                                        class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                                    @error("edit_existing_payments.{$epIndex}.payment_date")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                                <div class="w-full sm:w-48">
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nominal</label>
+                                                    <div x-data="{
+                                                        raw: $wire.entangle('edit_existing_payments.{{ $epIndex }}.amount'),
+                                                        displayValue: '',
+                                                        init() {
+                                                            this.$watch('raw', value => {
+                                                                if (value !== undefined && value !== null && value !== '' && value != 0) {
+                                                                    this.displayValue = new Intl.NumberFormat('id-ID').format(value);
+                                                                } else {
+                                                                    this.displayValue = '';
+                                                                }
+                                                            });
+                                                            if (this.raw !== undefined && this.raw !== null && this.raw !== '' && this.raw != 0) {
+                                                                this.displayValue = new Intl.NumberFormat('id-ID').format(this.raw);
+                                                            }
+                                                        },
+                                                        updateValue(val) {
+                                                            let rawVal = val.toString().replace(/\D/g, '');
+                                                            this.displayValue = rawVal ? new Intl.NumberFormat('id-ID').format(rawVal) : '';
+                                                            this.raw = rawVal;
+                                                        }
+                                                    }">
+                                                        <input type="text" x-model="displayValue"
+                                                            x-on:input="updateValue($event.target.value)"
+                                                            class="block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 text-right shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                            placeholder="0">
+                                                    </div>
+                                                    @error("edit_existing_payments.{$epIndex}.amount")
+                                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+
+                                                <button type="button"
+                                                    wire:click="removeExistingPayment({{ $epIndex }})"
+                                                    class="absolute top-3 right-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Hapus Pembayaran">
+                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endif
@@ -1156,7 +1206,7 @@
                                         Tambah Pembayaran (Pelunasan)</h4>
                                     <div class="space-y-3">
                                         @foreach ($edit_new_payments as $npIndex => $np)
-                                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
+                                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-blue-50/50 rounded-xl border-blue-100"
                                                 wire:key="edit-payment-{{ $npIndex }}">
                                                 <div class="flex-1">
                                                     <label
