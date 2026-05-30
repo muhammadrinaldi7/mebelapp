@@ -302,12 +302,12 @@ class Sales extends Component
             $this->edit_shipping_status = $transaction->shipping_status ?? 'bawa_sendiri';
             $this->edit_driver_name = $transaction->driver_name ?? '';
 
-            // Load existing payments for display
+            // Load existing payments for display & editing
             $this->edit_existing_payments = $transaction->payments->map(fn($p) => [
                 'id' => $p->id,
-                'method_name' => $p->paymentMethod->name ?? 'N/A',
+                'payment_method_id' => $p->payment_method_id,
                 'amount' => (float) $p->amount,
-                'payment_date' => $p->payment_date->format('d/m/Y'),
+                'payment_date' => $p->payment_date->format('Y-m-d'),
                 'notes' => $p->notes,
             ])->toArray();
 
@@ -345,6 +345,13 @@ class Sales extends Component
             'edit_items.*.product_id' => 'required|exists:products,id',
             'edit_items.*.quantity' => 'required|integer|min:1',
         ];
+
+        // If there are existing payments, validate them
+        if (count($this->edit_existing_payments) > 0) {
+            $rules['edit_existing_payments.*.payment_method_id'] = 'required|exists:payment_methods,id';
+            $rules['edit_existing_payments.*.amount'] = 'required|numeric|min:1';
+            $rules['edit_existing_payments.*.payment_date'] = 'required|date';
+        }
 
         // If there are new payments, validate them
         if (count($this->edit_new_payments) > 0) {
@@ -427,6 +434,22 @@ class Sales extends Component
                     }
                 }
 
+                // Update or Delete existing payments
+                $existingPaymentIds = collect($this->edit_existing_payments)->pluck('id')->filter()->toArray();
+                TransactionPayment::where('transaction_id', $transaction->id)
+                    ->whereNotIn('id', $existingPaymentIds)
+                    ->delete();
+
+                foreach ($this->edit_existing_payments as $ep) {
+                    if (isset($ep['id']) && (float)($ep['amount'] ?? 0) > 0) {
+                        TransactionPayment::where('id', $ep['id'])->update([
+                            'payment_method_id' => $ep['payment_method_id'],
+                            'amount' => $ep['amount'],
+                            'payment_date' => $ep['payment_date'],
+                        ]);
+                    }
+                }
+
                 // Save new payments
                 foreach ($this->edit_new_payments as $payment) {
                     if ((float)($payment['amount'] ?? 0) > 0) {
@@ -446,7 +469,7 @@ class Sales extends Component
                 // Recalculate payment status using edited discount & shipping cost
                 $editDiscount = (float)($this->edit_discount ?: 0);
                 $editShippingCost = (float)($this->edit_shipping_cost ?: 0);
-                $totalPaid = $transaction->payments()->sum('amount') + collect($this->edit_new_payments)->sum(fn($p) => (float)($p['amount'] ?? 0));
+                $totalPaid = collect($this->edit_existing_payments)->sum(fn($p) => (float)($p['amount'] ?? 0)) + collect($this->edit_new_payments)->sum(fn($p) => (float)($p['amount'] ?? 0));
                 $grandTotal = $newTotalAmount - $editDiscount + $editShippingCost;
                 $paymentStatus = $this->calculatePaymentStatus($totalPaid, $grandTotal);
 
@@ -543,9 +566,15 @@ class Sales extends Component
 
     public function getEditTotalPaidProperty()
     {
-        $existing = collect($this->edit_existing_payments)->sum('amount');
+        $existing = collect($this->edit_existing_payments)->sum(fn($p) => (float)($p['amount'] ?? 0));
         $new = collect($this->edit_new_payments)->sum(fn($p) => (float)($p['amount'] ?? 0));
         return $existing + $new;
+    }
+
+    public function removeExistingPayment($index)
+    {
+        unset($this->edit_existing_payments[$index]);
+        $this->edit_existing_payments = array_values($this->edit_existing_payments);
     }
 
     public function getEditRemainingProperty()
